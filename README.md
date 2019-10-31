@@ -48,9 +48,9 @@ kubectl delete clusterrolebinding,ns shpod
 
 ## Internal details
 
-This repository (https://github.com/jpetazzo/shpod) is linked
-to a Docker Hub repository (https://hub.docker.com/r/jpetazzo/shpod).
-
 The YAML file is a Kubernetes manifest for a Pod, a ServiceAccount,
 a ClusterRoleBinding, and a Namespace to hold the Pod and ServiceAccount.
+
+The Pod uses image [jpetazzo/shpod](https://hub.docker.com/r/jpetazzo/shpod)
+on the Docker Hub, built from this repository (https://github.com/jpetazzo/shpod).
 
