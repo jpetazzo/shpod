@@ -31,7 +31,7 @@ To use it:
 
 3. Attach to the shpod pod:
    ```
-   kubecth attach --namespace=shpod -ti shpod
+   kubectl attach --namespace=shpod -ti shpod
    ```
 
 4. Enjoy!
