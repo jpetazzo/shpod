@@ -19,27 +19,52 @@ with the training materials at https://container.training/,
 so that you can get all the tools you need regardless
 of your exact Kubernetes setup.
 
-To use it:
+To use it, you need a Kubernetes cluster. You can use Minikube,
+microk8s, Docker Desktop, AKS, EKS, GKE, anything you like, really.
 
-1. Get a Kubernetes cluster. You can use Minikube, microk8s,
-   Docker Desktop, AKS, EKS, GKE, anything you like, really.
 
-2. Deploy the shpod pod:
+## One-liner usage
+
+The [shpod.sh](shpod.sh) script will:
+
+- apply the [shpod.yaml](shpod.yaml) manifest to your cluster,
+- wait for the pod `shpod` to be ready,
+- attach to that pod,
+- delete resources created by the manifest when you exit the pod.
+
+To execute it:
+
+```bash
+curl https://raw.githubusercontent.com/jpetazzo/shpod/master/shpod.sh | sh
+```
+
+If you don't like `curl|sh`, and/or if you want to execute things
+step by step, check the next section.
+
+
+## Step-by-step usage
+
+1. Deploy the shpod pod:
    ```
    kubectl apply -f https://raw.githubusercontent.com/jpetazzo/shpod/master/shpod.yaml
    ```
 
-3. Attach to the shpod pod:
+2. Attach to the shpod pod:
    ```
    kubectl attach --namespace=shpod -ti shpod
    ```
 
-4. Enjoy!
+3. Enjoy!
 
-To remove it, you can do a `kubectl delete` on that URL above.
 
-You can also delete the namespace `shpod` and the ClusterRoleBinding
-with the same name:
+## Clean up
+
+If you are using the shell script above, when you exit shpod,
+the script will delete the resources that were created.
+
+If you want to delete the resources manually, you can use
+`kubectl delete -f shpod.yaml`, or delete the namespace `shpod`
+and the ClusterRoleBinding with the same name:
 
 ```
 kubectl delete clusterrolebinding,ns shpod
