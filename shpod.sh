@@ -9,7 +9,7 @@ kubectl apply -f $YAML
 echo "Waiting for pod to be ready..."
 kubectl wait --namespace=shpod --for condition=Ready pod/shpod
 echo "Attaching to the pod..."
-kubectl attach --namespace=shpod -ti shpod
+kubectl attach --namespace=shpod -ti shpod </dev/tty
 echo "Deleting pod..."
 echo "
 Note: it's OK to press Ctrl-C if this takes too long and you're impatient.
