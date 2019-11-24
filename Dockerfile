@@ -7,12 +7,12 @@ ENV \
  STERN_VERSION=1.11.0
 ## Alpine base ##
 ENV COMPLETIONS=/usr/share/bash-completion/completions
-RUN apk add bash bash-completion curl git jq libintl ncurses tmux vim
+RUN apk add bash bash-completion curl git jq libintl ncurses tmux vim apache2-utils
 RUN sed -i s,/bin/ash,/bin/bash, /etc/passwd
 ## Ubuntu base ##
 #ENV COMPLETIONS=/etc/bash_completion.d
 #RUN apt-get update \
-# && apt-get install -y curl git jq vim
+# && apt-get install -y curl git jq vim apache2-utils
 ## Install a bunch of binaries
 RUN curl -L -o /usr/local/bin/docker-compose https://github.com/docker/compose/releases/download/${COMPOSE_VERSION}/docker-compose-Linux-x86_64 \
  && chmod +x /usr/local/bin/docker-compose
