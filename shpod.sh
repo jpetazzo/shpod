@@ -1,4 +1,6 @@
 #!/bin/sh
+# For more information about shpod, check it out on GitHub:
+# https://github.com/jpetazzo/shpod
 if [ -f shpod.yaml ]; then
   YAML=shpod.yaml
 else
