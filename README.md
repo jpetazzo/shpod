@@ -1,5 +1,10 @@
 # shpod
 
+**TL,DR:** `curl https://shpod.sh | sh`
+
+
+## What's this?
+
 `shpod` is a container image based on the Alpine distribution
 and embarking a bunch of tools useful when working with Kubernetes:
 
@@ -36,6 +41,13 @@ To execute it:
 
 ```bash
 curl https://raw.githubusercontent.com/jpetazzo/shpod/master/shpod.sh | sh
+```
+
+It's also available with short URLs:
+
+```bash
+curl https://shpod.sh | sh
+curl https://shpod.me | sh
 ```
 
 If you don't like `curl|sh`, and/or if you want to execute things
