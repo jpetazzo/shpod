@@ -4,6 +4,7 @@ ENV \
  HELM_VERSION=3.2.1 \
  KUBECTL_VERSION=1.18.2 \
  SHIP_VERSION=0.53.0 \
+ KUBECTX_VERSION=0.9.0 \
  STERN_VERSION=1.11.0
 ## Alpine base ##
 ENV COMPLETIONS=/usr/share/bash-completion/completions
@@ -31,14 +32,10 @@ RUN curl -L https://github.com/replicatedhq/ship/releases/download/v${SHIP_VERSI
 # It reports negative times. So, I found this random binary here. Shrug.
 RUN curl -L https://github.com/static-linux/static-binaries-i386/raw/4266c69990ae11315bad7b928f85b6c8e605ef14/httping-2.4.tar.gz \
   | tar zx -C /usr/local/bin --strip-components=1 httping-2.4/httping
-RUN cd /tmp \
- && git clone https://github.com/ahmetb/kubectx \
- && cd kubectx \
- && mv kubectx /usr/local/bin/kctx \
- && mv kubens /usr/local/bin/kns \
- && mv completion/*.bash $COMPLETIONS \
- && cd .. \
- && rm -rf kubectx
+RUN curl -L https://github.com/ahmetb/kubectx/releases/download/v${KUBECTX_VERSION}/kubectx_v${KUBECTX_VERSION}_linux_x86_64.tar.gz \
+  | tar zx -C /usr/local/bin kubectx 
+RUN curl -L https://github.com/ahmetb/kubectx/releases/download/v${KUBECTX_VERSION}/kubens_v${KUBECTX_VERSION}_linux_x86_64.tar.gz \
+  | tar zx -C /usr/local/bin kubens
 RUN cd /tmp \
  && git clone https://github.com/jonmosco/kube-ps1 \
  && cp kube-ps1/kube-ps1.sh /etc/profile.d/ \
