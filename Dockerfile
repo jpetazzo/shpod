@@ -7,7 +7,7 @@ ENV \
  STERN_VERSION=1.11.0
 ## Alpine base ##
 ENV COMPLETIONS=/usr/share/bash-completion/completions
-RUN apk add bash bash-completion curl git jq libintl ncurses tmux vim apache2-utils
+RUN apk add bash bash-completion curl git jq libintl ncurses openssl tmux vim apache2-utils
 RUN sed -i s,/bin/ash,/bin/bash, /etc/passwd
 ## Ubuntu base ##
 #ENV COMPLETIONS=/etc/bash_completion.d
