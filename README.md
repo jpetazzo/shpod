@@ -40,7 +40,7 @@ The [shpod.sh](shpod.sh) script will:
 To execute it:
 
 ```bash
-curl https://raw.githubusercontent.com/jpetazzo/shpod/master/shpod.sh | sh
+curl https://raw.githubusercontent.com/jpetazzo/shpod/main/shpod.sh | sh
 ```
 
 It's also available with short URLs:
@@ -58,7 +58,7 @@ step by step, check the next section.
 
 1. Deploy the shpod pod:
    ```
-   kubectl apply -f https://raw.githubusercontent.com/jpetazzo/shpod/master/shpod.yaml
+   kubectl apply -f https://raw.githubusercontent.com/jpetazzo/shpod/main/shpod.yaml
    ```
 
 2. Attach to the shpod pod:
