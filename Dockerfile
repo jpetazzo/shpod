@@ -1,13 +1,13 @@
 FROM alpine
 ENV \
- COMPOSE_VERSION=1.25.0 \
- HELM_VERSION=3.0.0 \
- KUBECTL_VERSION=1.16.3 \
- SHIP_VERSION=0.40.0 \
+ COMPOSE_VERSION=1.26.2 \
+ HELM_VERSION=3.3.0 \
+ KUBECTL_VERSION=1.18.8 \
+ SHIP_VERSION=0.51.3 \
  STERN_VERSION=1.11.0
 ## Alpine base ##
 ENV COMPLETIONS=/usr/share/bash-completion/completions
-RUN apk add bash bash-completion curl git jq libintl ncurses tmux vim apache2-utils
+RUN apk add bash bash-completion curl git jq libintl ncurses openssl tmux vim apache2-utils
 RUN sed -i s,/bin/ash,/bin/bash, /etc/passwd
 ## Ubuntu base ##
 #ENV COMPLETIONS=/etc/bash_completion.d
