@@ -1,6 +1,6 @@
 # shpod
 
-**TL,DR:** `curl https://shpod.sh | sh`
+**TL,DR:** `curl https://k8smastery.com/shpod.sh | sh`
 
 
 ## What's this?
@@ -20,7 +20,7 @@ It also includes tmux, a custom prompt, and completion for
 all of the above.
 
 Its goal is to provide a normalized environment, to go
-with the training materials at https://container.training/,
+with the training materials at https://kubernetesmastery.com,
 so that you can get all the tools you need regardless
 of your exact Kubernetes setup.
 
@@ -40,14 +40,7 @@ The [shpod.sh](shpod.sh) script will:
 To execute it:
 
 ```bash
-curl https://raw.githubusercontent.com/jpetazzo/shpod/main/shpod.sh | sh
-```
-
-It's also available with short URLs:
-
-```bash
-curl https://shpod.sh | sh
-curl https://shpod.me | sh
+curl https://k8smastery.com/shpod.sh | sh
 ```
 
 If you don't like `curl|sh`, and/or if you want to execute things
@@ -58,7 +51,7 @@ step by step, check the next section.
 
 1. Deploy the shpod pod:
    ```
-   kubectl apply -f https://raw.githubusercontent.com/jpetazzo/shpod/main/shpod.yaml
+   kubectl apply -f https://k8smastery.com/shpod.yaml
    ```
 
 2. Attach to the shpod pod:
@@ -88,6 +81,7 @@ kubectl delete clusterrolebinding,ns shpod
 The YAML file is a Kubernetes manifest for a Pod, a ServiceAccount,
 a ClusterRoleBinding, and a Namespace to hold the Pod and ServiceAccount.
 
-The Pod uses image [jpetazzo/shpod](https://hub.docker.com/r/jpetazzo/shpod)
-on the Docker Hub, built from this repository (https://github.com/jpetazzo/shpod).
+The Pod uses image [bretfisher/shpod](https://hub.docker.com/r/bretfisher/shpod)
+on the Docker Hub, built from this repository (https://github.com/bretfisher/shpod).
 
+## Thanks to @jpetazzo for this great open source!

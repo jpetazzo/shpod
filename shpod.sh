@@ -1,10 +1,10 @@
 #!/bin/sh
 # For more information about shpod, check it out on GitHub:
-# https://github.com/jpetazzo/shpod
+# https://github.com/bretfisher/shpod
 if [ -f shpod.yaml ]; then
   YAML=shpod.yaml
 else
-  YAML=https://raw.githubusercontent.com/jpetazzo/shpod/main/shpod.yaml
+  YAML=https://k8smastery.com/shpod.yaml
 fi
 echo "Applying YAML: $YAML..."
 kubectl apply -f $YAML
