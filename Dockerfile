@@ -46,6 +46,17 @@ RUN cd /tmp \
  && git clone https://github.com/jonmosco/kube-ps1 \
  && cp kube-ps1/kube-ps1.sh /etc/profile.d/ \
  && rm -rf kube-ps1
+RUN mkdir /tmp/krew \
+ && cd /tmp/krew \
+ && curl -fsSL https://github.com/kubernetes-sigs/krew/releases/latest/download/krew.tar.gz | tar -zxf- \
+ && ./krew-linux_amd64 install krew \
+ && cd \
+ && rm -rf /tmp/krew \
+ && echo export 'PATH=$HOME/.krew/bin:$PATH' >> .bashrc
+RUN curl -sSL https://github.com/derailed/k9s/releases/latest/download/k9s_$(uname -s)_$(uname -m).tar.gz \
+  | tar -zxvf- -C /usr/local/bin k9s
+RUN curl -sSL https://github.com/derailed/popeye/releases/latest/download/popeye_$(uname -s)_$(uname -m).tar.gz \
+  | tar -zxvf- -C /usr/local/bin popeye
 RUN kubectl config set-context kubernetes --namespace=default \
  && kubectl config use-context kubernetes
 COPY --from=jid /go/bin/jid /usr/local/bin/jid
