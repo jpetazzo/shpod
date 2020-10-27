@@ -57,6 +57,11 @@ RUN curl -sSL https://github.com/derailed/k9s/releases/latest/download/k9s_$(una
   | tar -zxvf- -C /usr/local/bin k9s
 RUN curl -sSL https://github.com/derailed/popeye/releases/latest/download/popeye_$(uname -s)_$(uname -m).tar.gz \
   | tar -zxvf- -C /usr/local/bin popeye
+COPY --from=tiltdev/tilt /usr/local/bin/tilt /usr/local/bin/tilt
+RUN curl -Lo /usr/local/bin/skaffold https://storage.googleapis.com/skaffold/releases/latest/skaffold-linux-amd64 \
+ && chmod +x /usr/local/bin/skaffold
+RUN curl -Lo /usr/local/bin/kompose https://github.com/kubernetes/kompose/releases/latest/download/kompose-linux-amd64 \
+ && chmod +x /usr/local/bin/kompose
 RUN kubectl config set-context kubernetes --namespace=default \
  && kubectl config use-context kubernetes
 COPY --from=jid /go/bin/jid /usr/local/bin/jid
