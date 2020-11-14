@@ -16,6 +16,7 @@ and embarking a bunch of tools useful when working with Kubernetes:
 - kubectl
 - kubectx + kubens
 - kube-ps1
+- kubeseal
 - k9s
 - ship
 - skaffold

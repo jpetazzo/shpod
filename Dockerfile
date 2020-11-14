@@ -62,6 +62,8 @@ RUN curl -Lo /usr/local/bin/skaffold https://storage.googleapis.com/skaffold/rel
  && chmod +x /usr/local/bin/skaffold
 RUN curl -Lo /usr/local/bin/kompose https://github.com/kubernetes/kompose/releases/latest/download/kompose-linux-amd64 \
  && chmod +x /usr/local/bin/kompose
+RUN curl -Lo /usr/local/bin/kubeseal https://github.com/bitnami-labs/sealed-secrets/releases/download/v0.13.1/kubeseal-linux-amd64 \
+ && chmod +x /usr/local/bin/kubeseal
 RUN kubectl config set-context kubernetes --namespace=default \
  && kubectl config use-context kubernetes
 COPY --from=jid /go/bin/jid /usr/local/bin/jid
