@@ -8,13 +8,20 @@
 `shpod` is a container image based on the Alpine distribution
 and embarking a bunch of tools useful when working with Kubernetes:
 
-- kubectl
+- compose
 - helm
-- ship
+- jid
+- jq
+- krew
+- kubectl
 - kubectx + kubens
 - kube-ps1
+- kubeseal
+- k9s
+- ship
+- skaffold
 - stern
-- compose
+- tilt
 
 It also includes tmux, a custom prompt, and completion for
 all of the above.
@@ -84,4 +91,12 @@ a ClusterRoleBinding, and a Namespace to hold the Pod and ServiceAccount.
 The Pod uses image [bretfisher/shpod](https://hub.docker.com/r/bretfisher/shpod)
 on the Docker Hub, built from this repository (https://github.com/bretfisher/shpod).
 
-## Thanks to @jpetazzo for this great open source!
+
+## Opening multiple sessions
+
+Shpod tries to detect if it is already running; and if it's the case,
+it will try to start another process using `kubectl exec`. Note that
+if the first shpod process exits, Kubernetes will terminate all the
+other processes.
+
+## Thanks to @jpetazzo for this great open source

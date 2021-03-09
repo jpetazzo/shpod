@@ -1,3 +1,6 @@
+FROM golang:alpine AS jid
+RUN apk add git
+RUN go get -u github.com/simeji/jid/cmd/jid
 FROM alpine
 ENV \
  COMPOSE_VERSION=1.26.2 \
@@ -43,8 +46,27 @@ RUN cd /tmp \
  && git clone https://github.com/jonmosco/kube-ps1 \
  && cp kube-ps1/kube-ps1.sh /etc/profile.d/ \
  && rm -rf kube-ps1
+RUN mkdir /tmp/krew \
+ && cd /tmp/krew \
+ && curl -fsSL https://github.com/kubernetes-sigs/krew/releases/latest/download/krew.tar.gz | tar -zxf- \
+ && ./krew-linux_amd64 install krew \
+ && cd \
+ && rm -rf /tmp/krew \
+ && echo export 'PATH=$HOME/.krew/bin:$PATH' >> .bashrc
+RUN curl -sSL https://github.com/derailed/k9s/releases/latest/download/k9s_$(uname -s)_$(uname -m).tar.gz \
+  | tar -zxvf- -C /usr/local/bin k9s
+RUN curl -sSL https://github.com/derailed/popeye/releases/latest/download/popeye_$(uname -s)_$(uname -m).tar.gz \
+  | tar -zxvf- -C /usr/local/bin popeye
+COPY --from=tiltdev/tilt /usr/local/bin/tilt /usr/local/bin/tilt
+RUN curl -Lo /usr/local/bin/skaffold https://storage.googleapis.com/skaffold/releases/latest/skaffold-linux-amd64 \
+ && chmod +x /usr/local/bin/skaffold
+RUN curl -Lo /usr/local/bin/kompose https://github.com/kubernetes/kompose/releases/latest/download/kompose-linux-amd64 \
+ && chmod +x /usr/local/bin/kompose
+RUN curl -Lo /usr/local/bin/kubeseal https://github.com/bitnami-labs/sealed-secrets/releases/download/v0.13.1/kubeseal-linux-amd64 \
+ && chmod +x /usr/local/bin/kubeseal
 RUN kubectl config set-context kubernetes --namespace=default \
  && kubectl config use-context kubernetes
+COPY --from=jid /go/bin/jid /usr/local/bin/jid
 WORKDIR /root
 RUN echo trap exit TERM > /etc/profile.d/trapterm.sh
 RUN sed -i "s/export PS1=/#export PS1=/" /etc/profile
