@@ -8,6 +8,8 @@ ENV \
  KUBECTL_VERSION=1.18.8 \
  SHIP_VERSION=0.51.3 \
  STERN_VERSION=1.11.0
+## which platform ##
+RUN uname -s && uname -m
 ## Alpine base ##
 ENV COMPLETIONS=/usr/share/bash-completion/completions
 RUN apk add bash bash-completion curl git jq libintl ncurses openssl tmux vim apache2-utils
