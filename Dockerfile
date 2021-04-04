@@ -22,7 +22,7 @@ RUN curl -L -o /usr/local/bin/docker-compose https://github.com/docker/compose/r
 RUN curl -L -o /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/v${KUBECTL_VERSION}/bin/linux/amd64/kubectl \
  && chmod +x /usr/local/bin/kubectl
 RUN kubectl completion bash > $COMPLETIONS/kubectl.bash
-RUN curl -L -o /usr/local/bin/stern https://github.com/wercker/stern/releases/download/${STERN_VERSION}/stern_linux_amd64 \
+RUN curl -L -o /usr/local/bin/stern https://github.com/stern/stern/releases/download/${STERN_VERSION}/stern_linux_amd64 \
  && chmod +x /usr/local/bin/stern
 RUN stern --completion bash > $COMPLETIONS/stern.bash
 RUN curl -L https://get.helm.sh/helm-v${HELM_VERSION}-linux-amd64.tar.gz \
