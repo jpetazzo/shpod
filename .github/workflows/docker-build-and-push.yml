@@ -7,7 +7,9 @@ on:
   push:
     branches:
       - 'mastery'
- 
+  schedule:
+    # re-run montly to keep image fesh with upstream base images
+    - cron: '0 12 15 * *'
 
 jobs:
   build-and-push-images:
