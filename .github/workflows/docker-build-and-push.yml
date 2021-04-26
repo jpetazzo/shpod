@@ -1,13 +1,16 @@
 name: shpod
 
 on:
+  pull_request:
+    branches:
+      - 'mastery'
   push:
     branches:
       - 'mastery'
  
 
 jobs:
-  dockerize:
+  build-and-push-images:
     runs-on: ubuntu-latest
     steps:
       -
@@ -22,8 +25,6 @@ jobs:
           images: |
             bretfisher/shpod
             ghcr.io/bretfisher/shpod
-          # add git short SHA as Docker tag
-          tag-sha: true
       -
         name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -51,5 +52,5 @@ jobs:
         with:
           platforms: linux/amd64,linux/arm64,linux/arm/v7
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.docker_meta.outputs.tags }},bretfisher/shpod:latest
+          tags: ${{ steps.docker_meta.outputs.tags }}
           labels: ${{ steps.docker_meta.outputs.labels }}
