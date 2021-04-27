@@ -133,7 +133,7 @@ RUN echo tilt; case ${TARGETPLATFORM} in \
 RUN echo skaffold; case ${TARGETPLATFORM} in \
          "linux/amd64")  ARCH=amd64  ;; \
          "linux/arm64")  ARCH=arm64  ;; \
-    ac \ 
+    esac \ 
     && if [[ ${ARCH} != "arm" ]] ; \
     then \
       curl -sSLo /usr/local/bin/skaffold https://storage.googleapis.com/skaffold/releases/latest/skaffold-linux-${ARCH} \
