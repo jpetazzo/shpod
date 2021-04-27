@@ -66,7 +66,7 @@ RUN helm completion bash > $COMPLETIONS/helm.bash
 COPY --from=bretfisher/httping /usr/local/bin/httping /usr/local/bin/httping
 
 # kubectx and kubens https://github.com/ahmetb/kubectx
-RUN #kubectx; case ${TARGETPLATFORM} in \
+RUN echo kubectx; case ${TARGETPLATFORM} in \
          "linux/amd64")  ARCH=x86_64  ;; \
          "linux/arm64")  ARCH=arm64  ;; \
          "linux/arm/v7") ARCH=armhf  ;; \
@@ -79,10 +79,10 @@ RUN #kubectx; case ${TARGETPLATFORM} in \
     && curl -sSLo ${COMPLETIONS}/kubens.bash https://github.com/ahmetb/kubectx/releases/download/v${KUBECTX_VERSION}/kubens
 
 # kube-ps1 https://github.com/jonmosco/kube-ps1
-RUN #kube-ps1; curl -sSLo /etc/profile.d/kube-ps1.sh https://raw.githubusercontent.com/jonmosco/kube-ps1/master/kube-ps1.sh
+RUN echo kube-ps1; curl -sSLo /etc/profile.d/kube-ps1.sh https://raw.githubusercontent.com/jonmosco/kube-ps1/master/kube-ps1.sh
 
 # krew https://github.com/kubernetes-sigs/krew
-RUN #krew; case ${TARGETPLATFORM} in \
+RUN echo krew; case ${TARGETPLATFORM} in \
          "linux/amd64")  ARCH=amd64  ;; \
          "linux/arm64")  ARCH=arm64  ;; \
          "linux/arm/v7") ARCH=arm  ;; \
@@ -100,7 +100,7 @@ RUN #krew; case ${TARGETPLATFORM} in \
 # TODO: add https://github.com/replicatedhq/kots
 
 # k9s https://github.com/derailed/k9s
-RUN #k9s; case ${TARGETPLATFORM} in \
+RUN echo k9s; case ${TARGETPLATFORM} in \
          "linux/amd64")  ARCH=x86_64  ;; \
          "linux/arm64")  ARCH=arm64  ;; \
          "linux/arm/v7") ARCH=arm  ;; \
@@ -109,7 +109,7 @@ RUN #k9s; case ${TARGETPLATFORM} in \
     | tar -zxo -C /usr/local/bin/ k9s
 
 # popeye https://github.com/derailed/popeye 
-RUN #popeye; case ${TARGETPLATFORM} in \
+RUN echo popeye; case ${TARGETPLATFORM} in \
          "linux/amd64")  ARCH=x86_64  ;; \
          "linux/arm64")  ARCH=arm64  ;; \
          "linux/arm/v7") ARCH=arm  ;; \
@@ -118,7 +118,7 @@ RUN #popeye; case ${TARGETPLATFORM} in \
     | tar -zxo -C /usr/local/bin popeye
 
 # tilt https://github.com/tilt-dev/tilt
-RUN #tilt; case ${TARGETPLATFORM} in \
+RUN echo tilt; case ${TARGETPLATFORM} in \
          "linux/amd64")  ARCH=x86_64  ;; \
          "linux/arm64")  ARCH=arm64_ALPHA  ;; \
          "linux/arm/v7") ARCH=arm_ALPHA  ;; \
@@ -130,7 +130,7 @@ RUN #tilt; case ${TARGETPLATFORM} in \
 # FIXME: wait for arm/v7 support and update
         #  "linux/arm/v7") ARCH=arm  ;; \
         # https://github.com/GoogleContainerTools/skaffold/issues/5610
-RUN #skaffold; case ${TARGETPLATFORM} in \
+RUN echo skaffold; case ${TARGETPLATFORM} in \
          "linux/amd64")  ARCH=amd64  ;; \
          "linux/arm64")  ARCH=arm64  ;; \
     ac \ 
@@ -141,7 +141,7 @@ RUN #skaffold; case ${TARGETPLATFORM} in \
     fi
 
 # kompose https://github.com/kubernetes/kompose
-RUN #kompose; case ${TARGETPLATFORM} in \
+RUN echo kompose; case ${TARGETPLATFORM} in \
          "linux/amd64")  ARCH=amd64  ;; \
          "linux/arm64")  ARCH=arm64  ;; \
          "linux/arm/v7") ARCH=arm  ;; \
@@ -150,7 +150,7 @@ RUN #kompose; case ${TARGETPLATFORM} in \
     && chmod +x /usr/local/bin/kompose
 
 #kubeseal https://github.com/bitnami-labs/sealed-secrets
-RUN #kubeseal; case ${TARGETPLATFORM} in \
+RUN echo kubeseal; case ${TARGETPLATFORM} in \
          "linux/amd64")  ARCH=linux-amd64  ;; \
          "linux/arm64")  ARCH=arm64  ;; \
          "linux/arm/v7") ARCH=arm  ;; \
@@ -175,4 +175,4 @@ ENV \
  KUBE_PS1_CTX_COLOR="green" \
  KUBE_PS1_NS_COLOR="green" \
  PS1="\e[1m\e[31m[\$HOSTIP] \e[32m(\$(kube_ps1)) \e[34m\u@\h\e[35m \w\e[0m\n$ "
-ENTRYPOINT ["bash", "-l"]
+CMD ["bash", "-l"]
