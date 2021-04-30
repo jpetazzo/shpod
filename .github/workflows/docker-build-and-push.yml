@@ -24,7 +24,9 @@ jobs:
           images: |
             bretfisher/shpod
             ghcr.io/bretfisher/shpod
-          tag: |
+          flavor: |
+            latest=false
+          tags: |
             type=raw,value=latest
       -
         name: Set up QEMU
