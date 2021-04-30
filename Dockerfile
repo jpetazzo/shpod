@@ -1,18 +1,24 @@
-FROM --platform=${BUILDPLATFORM} golang:alpine AS jid
+FROM golang:alpine AS jid
 RUN apk add git
 # build jid for later
 RUN go get -u github.com/simeji/jid/cmd/jid
 
 # main image with all the tools
-FROM --platform=${BUILDPLATFORM} alpine
+FROM alpine
 ARG TARGETPLATFORM
+ARG BUILDPLATFORM
+RUN echo "I am running on $BUILDPLATFORM, building for $TARGETPLATFORM" > /log
 ENV \
- COMPOSE_VERSION=1.28.6 \
- HELM_VERSION=3.5.3 \
- KUBECTL_VERSION=1.20.0 \
+ COMPOSE_VERSION=1.29.1 \
+ # https://github.com/docker/compose/releases
+ HELM_VERSION=3.5.4 \
+ # https://github.com/helm/helm/releases
+ KUBECTL_VERSION=1.21.0 \
+ # https://dl.k8s.io/release/stable.txt
  KUBECTX_VERSION=0.9.3 \
- SHIP_VERSION=0.51.3 \
- STERN_VERSION=1.14.0
+ # https://github.com/ahmetb/kubectx/releases
+ STERN_VERSION=1.15.0
+ # https://github.com/stern/stern/releases
 ENV COMPLETIONS=/usr/share/bash-completion/completions
 RUN apk add bash bash-completion curl git jq libintl ncurses openssl tmux vim apache2-utils
 
@@ -96,7 +102,8 @@ RUN echo krew; case ${TARGETPLATFORM} in \
     && rm -rf /tmp/krew \
     && echo export 'PATH=$HOME/.krew/bin:$PATH' >> .bashrc
 
-# TODO: add ship
+# TODO: add ship (no arm support). 
+# It's superseded by Kots:
 # TODO: add https://github.com/replicatedhq/kots
 
 # k9s https://github.com/derailed/k9s
