@@ -22,8 +22,10 @@ jobs:
         with:
           # list of Docker images to use as base name for tags
           images: |
-            bretfisher/shpod:latest
-            ghcr.io/bretfisher/shpod:latest
+            bretfisher/shpod
+            ghcr.io/bretfisher/shpod
+          tag: |
+            type=raw,value=latest
       -
         name: Set up QEMU
         id: qemu
@@ -32,9 +34,14 @@ jobs:
         name: Set up Docker Buildx
         id: buildx
         uses: docker/setup-buildx-action@v1
-      -
-        name: Available platforms
-        run: echo ${{ steps.buildx.outputs.platforms }}
+      -        
+        name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
       -
         name: Login to DockerHub
         if: github.event_name != 'pull_request'
@@ -56,8 +63,12 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           platforms: linux/amd64,linux/arm64,linux/arm/v7
+          builder: ${{ steps.buildx.outputs.name }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
+          # don't push during a pull_request, only build
           push: ${{ github.event_name != 'pull_request' }}
-          tags: bretfisher/shpod:latest,ghcr.io/bretfisher/shpod:latest
+          tags: ${{ steps.docker_meta.outputs.tags }}
           labels: ${{ steps.docker_meta.outputs.labels }}
       -
         name: Show image digest
