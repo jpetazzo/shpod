@@ -4,9 +4,17 @@ on:
   pull_request:
     branches:
       - 'main'
+    # only build when important files change
+    paths:
+      - 'Dockerfile'
+      - '.github/workflows/docker-build-and-push.yml'
   push:
     branches:
       - 'main'
+    # only build when important files change
+    paths:
+      - 'Dockerfile'
+      - '.github/workflows/docker-build-and-push.yml'
   schedule:
     # re-run montly to keep image fesh with upstream base images
     - cron: '0 12 15 * *'
