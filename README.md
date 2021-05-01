@@ -30,7 +30,7 @@ It also includes tmux, a custom prompt, and completion for
 all of the above.
 
 Its goal is to provide a normalized environment, to go
-with the training materials at https://kubernetesmastery.com,
+with the training materials at [kubernetesmastery.com](https://kubernetesmastery.com),
 so that you can get all the tools you need regardless
 of your exact Kubernetes setup.
 
@@ -60,12 +60,12 @@ step by step, check the next section.
 ## Step-by-step usage
 
 1. Deploy the shpod pod:
-   ```
+   ```bash
    kubectl apply -f https://k8smastery.com/shpod.yaml
    ```
 
 2. Attach to the shpod pod:
-   ```
+   ```bash
    kubectl attach --namespace=shpod -ti shpod
    ```
 
@@ -81,7 +81,7 @@ If you want to delete the resources manually, you can use
 `kubectl delete -f shpod.yaml`, or delete the namespace `shpod`
 and the ClusterRoleBinding with the same name:
 
-```
+```bash
 kubectl delete clusterrolebinding,ns shpod
 ```
 
@@ -92,7 +92,7 @@ The YAML file is a Kubernetes manifest for a Pod, a ServiceAccount,
 a ClusterRoleBinding, and a Namespace to hold the Pod and ServiceAccount.
 
 The Pod uses image [bretfisher/shpod](https://hub.docker.com/r/bretfisher/shpod)
-on the Docker Hub, built from this repository (https://github.com/bretfisher/shpod).
+on the Docker Hub, built from this repository [github.com/bretfisher/shpod](https://github.com/bretfisher/shpod).
 
 
 ## Opening multiple sessions
