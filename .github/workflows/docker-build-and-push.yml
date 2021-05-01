@@ -1,4 +1,4 @@
-name: shpod
+name: build-and-push-image
 
 on:
   pull_request:
