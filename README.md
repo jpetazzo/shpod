@@ -2,6 +2,12 @@
 
 **TL,DR:** `curl https://shpod.sh | sh`
 
+If you are looking for an image that works on the ARM architecture
+(like the Raspberry Pi or the Apple M1), have a look at
+[BretFisher/shpod](https://github.com/BretFisher/shpod) instead.
+Bret's fork is also a state-of-the-art example of a multi-arch
+Dockerfile!
+
 
 ## What's this?
 
