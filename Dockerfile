@@ -1,5 +1,5 @@
 FROM golang:alpine AS jid
-RUN apk add git
+RUN apk add git --no-cache
 # build jid for later
 RUN go get -u github.com/simeji/jid/cmd/jid
 
@@ -8,19 +8,20 @@ FROM alpine
 ARG TARGETPLATFORM
 ARG BUILDPLATFORM
 RUN echo "I am running on $BUILDPLATFORM, building for $TARGETPLATFORM" > /log
-ENV \
- COMPOSE_VERSION=1.29.1 \
- # https://github.com/docker/compose/releases
- HELM_VERSION=3.5.4 \
- # https://github.com/helm/helm/releases
- KUBECTL_VERSION=1.21.0 \
- # https://dl.k8s.io/release/stable.txt
- KUBECTX_VERSION=0.9.3 \
- # https://github.com/ahmetb/kubectx/releases
- STERN_VERSION=1.15.0
- # https://github.com/stern/stern/releases
-ENV COMPLETIONS=/usr/share/bash-completion/completions
-RUN apk add bash bash-completion curl git jq libintl ncurses openssl tmux vim apache2-utils
+
+ENV COMPOSE_VERSION=1.29.1 \
+    # https://github.com/docker/compose/releases
+    HELM_VERSION=3.5.4 \
+    # https://github.com/helm/helm/releases
+    KUBECTL_VERSION=1.21.0 \
+    # https://dl.k8s.io/release/stable.txt
+    KUBECTX_VERSION=0.9.3 \
+    # https://github.com/ahmetb/kubectx/releases
+    STERN_VERSION=1.15.0 \
+    # https://github.com/stern/stern/releases
+    COMPLETIONS=/usr/share/bash-completion/completions
+
+RUN apk add --no-cache bash bash-completion curl git jq libintl ncurses openssl tmux vim apache2-utils
 
 # docker-compose
 # FIXME: sadly only x64 builds are prebuilt

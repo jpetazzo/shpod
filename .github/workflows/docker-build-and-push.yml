@@ -7,16 +7,18 @@ on:
     branches:
       - 'main'
     # only build when important files change
-    paths:
-      - 'Dockerfile'
-      - '.github/workflows/docker-build-and-push.yml'
+    paths-ignore:
+      - 'README.md'
+      - '.github/workflows/linter.yml'
+      - '.github/linters/**'
   push:
     branches:
       - 'main'
     # only build when important files change
-    paths:
-      - 'Dockerfile'
-      - '.github/workflows/docker-build-and-push.yml'
+    paths-ignore:
+      - 'README.md'
+      - '.github/workflows/linter.yml'
+      - '.github/linters/**'
   schedule:
     # re-run montly to keep image fesh with upstream base images
     - cron: '0 12 15 * *'
@@ -26,18 +28,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       -
-        name: Docker meta
-        id: docker_meta
-        uses: crazy-max/ghaction-docker-meta@v2
-        with:
-          # list of Docker images to use as base name for tags
-          images: |
-            bretfisher/shpod
-            ghcr.io/bretfisher/shpod
-          flavor: |
-            latest=false
-          tags: |
-            type=raw,value=latest
+        name: Checkout
+        uses: actions/checkout@v2.3.4
       -
         # we need qemu and buildx so we can build multiple platforms later
         name: Set up QEMU
@@ -72,6 +64,19 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      -
+        name: Docker meta
+        id: docker_meta
+        uses: docker/metadata-action@v3.3.0
+        with:
+          # list of Docker images to use as base name for tags
+          images: |
+            bretfisher/shpod
+            ghcr.io/bretfisher/shpod
+          flavor: |
+            latest=false
+          tags: |
+            type=raw,value=latest
       -
         # this will build the images, once per platform, 
         # then push to both Docker Hub and GHCR
