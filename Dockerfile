@@ -112,7 +112,7 @@ RUN echo k9s; case ${TARGETPLATFORM} in \
          "linux/arm64")  ARCH=arm64  ;; \
          "linux/arm/v7") ARCH=arm  ;; \
     esac \
-    && curl -sSL https://github.com/derailed/k9s/releases/latest/download/k9s_Linux_${ARCH}.tar.gz \
+    && curl -sSL https://github.com/derailed/k9s/releases/latest/download/k9s_v0.24.10_Linux_${ARCH}.tar.gz \
     | tar -zxo -C /usr/local/bin/ k9s
 
 # popeye https://github.com/derailed/popeye 
