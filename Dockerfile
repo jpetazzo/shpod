@@ -180,6 +180,6 @@ ENV HOSTIP="0.0.0.0" \
     KUBE_PS1_SUFFIX="" \
     KUBE_PS1_SYMBOL_ENABLE="false" \
     KUBE_PS1_CTX_COLOR="green" \
-    KUBE_PS1_NS_COLOR="green" \
-    PS1="\e[1m\e[31m[\$HOSTIP] \e[32m(\$(kube_ps1)) \e[34m\u@\h\e[35m \w\e[0m\n$ "
+    KUBE_PS1_NS_COLOR="green"
+ENV PS1="\e[1m\e[31m[\$HOSTIP] \e[32m(\$(kube_ps1)) \e[34m\u@\h\e[35m \w\e[0m\n$ "
 CMD ["bash", "-l"]
