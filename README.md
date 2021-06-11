@@ -1,7 +1,7 @@
 # shpod
 
-[![GitHub Super-Linter](https://github.com/bretfisher/shpod/workflows/Lint%20Code%20Base/badge.svg)](https://github.com/marketplace/actions/super-linter)
-![Build and Push Image](https://github.com/bretfisher/shpod/actions/workflows/docker-build-and-push.yml/badge.svg?branch=main)
+[![GitHub Super-Linter](https://github.com/bretfisher/shpod/workflows/Lint%20Code%20Base/badge.svg)](https://github.com/BretFisher/shpod/actions/workflows/linter.yml)
+[![Build and Push Image](https://github.com/bretfisher/shpod/actions/workflows/docker-build-and-push.yml/badge.svg?branch=main)](https://github.com/BretFisher/shpod/actions/workflows/docker-build-and-push.yml)
 
 **TL,DR:** `curl https://k8smastery.com/shpod.sh | sh`
 
