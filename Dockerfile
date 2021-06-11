@@ -9,32 +9,35 @@ ARG TARGETPLATFORM
 ARG BUILDPLATFORM
 RUN echo "I am running on $BUILDPLATFORM, building for $TARGETPLATFORM" > /log
 
-ENV COMPOSE_VERSION=1.29.1 \
-    # https://github.com/docker/compose/releases
-    HELM_VERSION=3.5.4 \
+ENV COMPOSE_VERSION=v2.0.0-beta.3 \
+    # https://github.com/docker/compose-cli/releases
+    HELM_VERSION=3.6.0 \
     # https://github.com/helm/helm/releases
-    KUBECTL_VERSION=1.21.0 \
+    KUBECTL_VERSION=1.21.1 \
     # https://dl.k8s.io/release/stable.txt
     KUBECTX_VERSION=0.9.3 \
     # https://github.com/ahmetb/kubectx/releases
-    STERN_VERSION=1.15.0 \
+    STERN_VERSION=1.18.0 \
     # https://github.com/stern/stern/releases
     COMPLETIONS=/usr/share/bash-completion/completions
-
+    
 RUN apk add --no-cache bash bash-completion curl git jq libintl ncurses openssl tmux vim apache2-utils
 
 # docker-compose
-# FIXME: sadly only x64 builds are prebuilt
-#        arm versions are usable with pip, but this image doesn't have Python (for size mostly)
-#        the future is "compose-cli" so the TODO here is to just add that instead
-# TODO: add compose-cli
-RUN echo compose; \
-    if [[ ${TARGETPLATFORM} == "linux/amd64" ]] ; then \
-      (curl -sSLo /usr/local/bin/docker-compose https://github.com/docker/compose/releases/download/${COMPOSE_VERSION}/docker-compose-Linux-x86_64 \
-      && chmod +x /usr/local/bin/docker-compose) \
-    fi
+RUN echo compose; case ${TARGETPLATFORM} in \
+         "linux/amd64")  ARCH=amd64  ;; \
+         "linux/arm64")  ARCH=arm64  ;; \
+         "linux/arm/v7") ARCH=armv7  ;; \
+    esac \
+    && mkdir -p /root/.docker/cli-plugins \
+    && curl -sSLo /root/.docker/cli-plugins/docker-compose https://github.com/docker/compose-cli/releases/download/${COMPOSE_VERSION}/docker-compose-linux-${ARCH} \
+    && chmod +x /root/.docker/cli-plugins/docker-compose
 
-# TODO: add docker cli
+# provide a note about the new compose cli if they try the old command
+COPY docker-compose /usr/local/bin/
+
+# docker cli
+COPY --from=docker /usr/local/bin/docker /usr/local/bin/docker
 
 # kubectl https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/
 RUN echo kubectl; \
@@ -142,7 +145,7 @@ RUN echo skaffold; case ${TARGETPLATFORM} in \
          "linux/amd64")  ARCH=amd64  ;; \
          "linux/arm64")  ARCH=arm64  ;; \
     esac \ 
-    && if [[ ${ARCH} != "arm" ]] ; \
+    && if test "${ARCH}" != "arm" ; \
     then \
       curl -sSLo /usr/local/bin/skaffold https://storage.googleapis.com/skaffold/releases/latest/skaffold-linux-${ARCH} \
       && chmod +x /usr/local/bin/skaffold ; \
