@@ -9,15 +9,15 @@ ARG TARGETPLATFORM
 ARG BUILDPLATFORM
 RUN echo "I am running on $BUILDPLATFORM, building for $TARGETPLATFORM" > /log
 
-ENV COMPOSE_VERSION=v2.0.0-beta.3 \
+ENV COMPOSE_VERSION=v2.0.0-beta.4 \
     # https://github.com/docker/compose-cli/releases
-    HELM_VERSION=3.6.0 \
+    HELM_VERSION=3.6.2 \
     # https://github.com/helm/helm/releases
-    KUBECTL_VERSION=1.21.1 \
+    KUBECTL_VERSION=1.21.2 \
     # https://dl.k8s.io/release/stable.txt
     KUBECTX_VERSION=0.9.3 \
     # https://github.com/ahmetb/kubectx/releases
-    STERN_VERSION=1.18.0 \
+    STERN_VERSION=1.19.0 \
     # https://github.com/stern/stern/releases
     COMPLETIONS=/usr/share/bash-completion/completions
     
