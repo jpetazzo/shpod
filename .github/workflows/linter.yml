@@ -51,4 +51,8 @@ jobs:
         env:
           VALIDATE_ALL_CODEBASE: false
           DEFAULT_BRANCH: main
+          # turn off dockerfilelint, as its a dead project
+          # https://github.com/replicatedhq/dockerfilelint/issues/169
+          # hadolint will run and is sufficent (no need for two linters)
+          VALIDATE_DOCKERFILE: false
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
