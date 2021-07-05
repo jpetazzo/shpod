@@ -9,7 +9,7 @@ ARG TARGETPLATFORM
 ARG BUILDPLATFORM
 RUN echo "I am running on $BUILDPLATFORM, building for $TARGETPLATFORM" > /log
 
-ENV COMPOSE_VERSION=v2.0.0-beta.4 \
+ENV COMPOSE_VERSION=v2.0.0-beta.5 \
     # https://github.com/docker/compose-cli/releases
     HELM_VERSION=3.6.2 \
     # https://github.com/helm/helm/releases
