@@ -68,6 +68,9 @@ COPY --from=jid /go/bin/jid /usr/local/bin/jid
 WORKDIR /root
 RUN echo trap exit TERM > /etc/profile.d/trapterm.sh
 RUN sed -i "s/export PS1=/#export PS1=/" /etc/profile
+RUN echo 'alias k=kubectl' >> $HOME/.bash_completion \
+ && echo 'complete -F __start_kubectl k' >> $HOME/.bash_completion \
+ && echo '. $COMPLETIONS/kubectl.bash' >> $HOME/.bash_completion
 ENV \
  HOSTIP="0.0.0.0" \
  KUBE_PS1_PREFIX="" \
