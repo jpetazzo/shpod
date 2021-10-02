@@ -3,9 +3,9 @@ RUN apk add git
 RUN go get -u github.com/simeji/jid/cmd/jid
 FROM alpine
 ENV \
- COMPOSE_VERSION=1.29.1 \
- HELM_VERSION=3.5.4 \
- KUBECTL_VERSION=1.21.0 \
+ COMPOSE_VERSION=1.29.2 \
+ HELM_VERSION=3.7.0 \
+ KUBECTL_VERSION=1.22.2 \
  SHIP_VERSION=0.51.3
 ## Alpine base ##
 ENV COMPLETIONS=/usr/share/bash-completion/completions
@@ -50,7 +50,7 @@ RUN mkdir /tmp/krew \
  && ./krew-linux_amd64 install krew \
  && cd \
  && rm -rf /tmp/krew \
- && echo export 'PATH=$HOME/.krew/bin:$PATH' >> .bashrc
+ && echo 'export PATH=$HOME/.krew/bin:$PATH' >> /etc/profile
 RUN curl -fsSL https://github.com/derailed/k9s/releases/latest/download/k9s_$(uname -s)_$(uname -m).tar.gz \
   | tar -zxvf- -C /usr/local/bin k9s
 RUN curl -fsSL https://github.com/derailed/popeye/releases/latest/download/popeye_$(uname -s)_$(uname -m).tar.gz \
