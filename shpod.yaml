@@ -32,7 +32,6 @@ spec:
   containers:
   - name: shpod
     image: jpetazzo/shpod
-    imagePullPolicy: IfNotPresent
     stdin: true
     tty: true
     env:
