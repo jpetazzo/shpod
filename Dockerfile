@@ -46,7 +46,7 @@ RUN cd /tmp \
  && rm -rf kube-ps1
 RUN mkdir /tmp/krew \
  && cd /tmp/krew \
- && curl -fsSL https://github.com/kubernetes-sigs/krew/releases/latest/download/krew.tar.gz | tar -zxf- \
+ && curl -fsSL https://github.com/kubernetes-sigs/krew/releases/latest/download/krew-linux_amd64.tar.gz | tar -zxf- \
  && ./krew-linux_amd64 install krew \
  && cd \
  && rm -rf /tmp/krew \
