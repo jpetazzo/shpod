@@ -72,6 +72,7 @@ RUN echo 'alias k=kubectl' >> $HOME/.bash_completion \
  && echo 'complete -F __start_kubectl k' >> $HOME/.bash_completion \
  && echo '. $COMPLETIONS/kubectl.bash' >> $HOME/.bash_completion
 ENV \
+ EDITOR="vim" \
  HOSTIP="0.0.0.0" \
  KUBE_PS1_PREFIX="" \
  KUBE_PS1_SUFFIX="" \
