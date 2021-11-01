@@ -1,21 +1,18 @@
 FROM golang:alpine AS jid
 RUN apk add git
 RUN go get -u github.com/simeji/jid/cmd/jid
+
 FROM alpine
 ENV \
  COMPOSE_VERSION=1.29.2 \
  HELM_VERSION=3.7.0 \
  KUBECTL_VERSION=1.22.2 \
  SHIP_VERSION=0.51.3
-## Alpine base ##
 ENV COMPLETIONS=/usr/share/bash-completion/completions
-RUN apk add bash bash-completion curl git jq libintl ncurses openssl tmux vim apache2-utils
-RUN sed -i s,/bin/ash,/bin/bash, /etc/passwd
-## Ubuntu base ##
-#ENV COMPLETIONS=/etc/bash_completion.d
-#RUN apt-get update \
-# && apt-get install -y curl git jq vim apache2-utils
-## Install a bunch of binaries
+RUN apk add bash bash-completion curl git jq libintl ncurses openssl tmux vim apache2-utils openssh sudo
+
+# Install a bunch of binaries, scripts, tools, etc.
+
 RUN curl -fsSL -o /usr/local/bin/docker-compose https://github.com/docker/compose/releases/download/${COMPOSE_VERSION}/docker-compose-Linux-x86_64 \
  && chmod +x /usr/local/bin/docker-compose
 RUN curl -fsSL -o /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/v${KUBECTL_VERSION}/bin/linux/amd64/kubectl \
@@ -30,6 +27,7 @@ RUN curl -fsSL https://github.com/replicatedhq/ship/releases/download/v${SHIP_VE
   | tar zx -C /usr/local/bin ship
 # This is embarrassing, but I can't get httping to compile correctly with musl.
 # It reports negative times. So, I found this random binary here. Shrug.
+# FIXME: I found the cause of the issue. It's fixed in Bret's branch. Backport the fix eventually.
 RUN curl -fsSL https://github.com/static-linux/static-binaries-i386/raw/4266c69990ae11315bad7b928f85b6c8e605ef14/httping-2.4.tar.gz \
   | tar zx -C /usr/local/bin --strip-components=1 httping-2.4/httping
 RUN cd /tmp \
@@ -44,13 +42,6 @@ RUN cd /tmp \
  && git clone https://github.com/jonmosco/kube-ps1 \
  && cp kube-ps1/kube-ps1.sh /etc/profile.d/ \
  && rm -rf kube-ps1
-RUN mkdir /tmp/krew \
- && cd /tmp/krew \
- && curl -fsSL https://github.com/kubernetes-sigs/krew/releases/latest/download/krew-linux_amd64.tar.gz | tar -zxf- \
- && ./krew-linux_amd64 install krew \
- && cd \
- && rm -rf /tmp/krew \
- && echo 'export PATH=$HOME/.krew/bin:$PATH' >> /etc/profile
 RUN curl -fsSL https://github.com/derailed/k9s/releases/latest/download/k9s_$(uname -s)_$(uname -m).tar.gz \
   | tar -zxvf- -C /usr/local/bin k9s
 RUN curl -fsSL https://github.com/derailed/popeye/releases/latest/download/popeye_$(uname -s)_$(uname -m).tar.gz \
@@ -62,23 +53,40 @@ RUN curl -fsSLo /usr/local/bin/kompose https://github.com/kubernetes/kompose/rel
  && chmod +x /usr/local/bin/kompose
 RUN curl -fsSLo /usr/local/bin/kubeseal https://github.com/bitnami-labs/sealed-secrets/releases/download/v0.13.1/kubeseal-linux-amd64 \
  && chmod +x /usr/local/bin/kubeseal
-RUN kubectl config set-context kubernetes --namespace=default \
- && kubectl config use-context kubernetes
 COPY --from=jid /go/bin/jid /usr/local/bin/jid
-WORKDIR /root
 RUN echo trap exit TERM > /etc/profile.d/trapterm.sh
-RUN sed -i "s/export PS1=/#export PS1=/" /etc/profile
-RUN echo 'alias k=kubectl' >> $HOME/.bash_completion \
- && echo 'complete -F __start_kubectl k' >> $HOME/.bash_completion \
- && echo '. $COMPLETIONS/kubectl.bash' >> $HOME/.bash_completion
-ENV \
- EDITOR="vim" \
- HOSTIP="0.0.0.0" \
- KUBE_PS1_PREFIX="" \
- KUBE_PS1_SUFFIX="" \
- KUBE_PS1_SYMBOL_ENABLE="false" \
- KUBE_PS1_CTX_COLOR="green" \
- KUBE_PS1_NS_COLOR="green" \
- PS1="\e[1m\e[31m[\$HOSTIP] \e[32m(\$(kube_ps1)) \e[34m\u@\h\e[35m \w\e[0m\n$ "
-ENTRYPOINT ["bash", "-l"]
 
+# Create user and finalize setup.
+
+RUN echo k8s:x:1000: >> /etc/group \
+ && echo k8s:x:1000:1000::/home/k8s:/bin/bash >> /etc/passwd \
+ && echo "k8s ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/k8s \
+ && mkdir /home/k8s \
+ && chown -R k8s:k8s /home/k8s/
+RUN mkdir /tmp/krew \
+ && cd /tmp/krew \
+ && curl -fsSL https://github.com/kubernetes-sigs/krew/releases/latest/download/krew-linux_amd64.tar.gz | tar -zxf- \
+ && sudo -u k8s -H ./krew-linux_amd64 install krew \
+ && cd \
+ && rm -rf /tmp/krew
+COPY --chown=1000:1000 bash_profile /home/k8s/.bash_profile
+COPY --chown=1000:1000 kubeconfig /home/k8s/.kube/config
+COPY motd /etc/motd
+COPY setup-tailhist.sh /usr/local/bin
+
+# If there is a tty, give us a shell.
+# (This happens e.g. when we do "docker run -ti jpetazzo/shpod".)
+# Otherwise, start an SSH server.
+# (This happens e.g. when we use that image in a Pod in a Deployment.)
+CMD \
+  if tty >/dev/null; then \
+    exec login -f k8s && \
+    : ; \
+  else \
+    ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key -N "" && \
+    echo k8s:${PASSWORD-k8s} | chpasswd && \
+    exec /usr/sbin/sshd -D -e && \
+    : ; \
+  fi
+
+EXPOSE 22/tcp
