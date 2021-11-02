@@ -9,7 +9,7 @@ ENV \
  KUBECTL_VERSION=1.22.2 \
  SHIP_VERSION=0.51.3
 ENV COMPLETIONS=/usr/share/bash-completion/completions
-RUN apk add apache2-utils bash bash-completion curl git jq libintl ncurses openssh openssl sudo tmux tree vim
+RUN apk add apache2-utils bash bash-completion curl file git jq libintl ncurses openssh openssl sudo tmux tree vim
 
 # Install a bunch of binaries, scripts, tools, etc.
 
@@ -53,7 +53,7 @@ COPY --from=tiltdev/tilt /usr/local/bin/tilt /usr/local/bin/tilt
 RUN tilt completion bash > $COMPLETIONS/tilt.bash
 RUN curl -fsSLo /usr/local/bin/skaffold https://storage.googleapis.com/skaffold/releases/latest/skaffold-linux-amd64 \
  && chmod +x /usr/local/bin/skaffold
-RUN skaffold completion bash > $COPMLETIONS/skaffold.bash
+RUN skaffold completion bash > $COMPLETIONS/skaffold.bash
 RUN curl -fsSLo /usr/local/bin/kompose https://github.com/kubernetes/kompose/releases/latest/download/kompose-linux-amd64 \
  && chmod +x /usr/local/bin/kompose
 RUN kompose completion bash > $COMPLETIONS/kompose.bash
@@ -77,6 +77,7 @@ RUN mkdir /tmp/krew \
  && rm -rf /tmp/krew
 COPY --chown=1000:1000 bash_profile /home/k8s/.bash_profile
 COPY --chown=1000:1000 kubeconfig /home/k8s/.kube/config
+COPY --chown=1000:1000 vimrc /home/k8s/.vimrc
 COPY motd /etc/motd
 COPY setup-tailhist.sh /usr/local/bin
 
