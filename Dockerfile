@@ -4,16 +4,16 @@ RUN go get -u github.com/simeji/jid/cmd/jid
 
 FROM alpine
 ENV \
- COMPOSE_VERSION=1.29.2 \
+ COMPOSE_VERSION=2.0.1 \
  HELM_VERSION=3.7.0 \
  KUBECTL_VERSION=1.22.2 \
  SHIP_VERSION=0.51.3
 ENV COMPLETIONS=/usr/share/bash-completion/completions
-RUN apk add bash bash-completion curl git jq libintl ncurses openssl tmux vim apache2-utils openssh sudo tree
+RUN apk add apache2-utils bash bash-completion curl git jq libintl ncurses openssh openssl sudo tmux tree vim
 
 # Install a bunch of binaries, scripts, tools, etc.
 
-RUN curl -fsSL -o /usr/local/bin/docker-compose https://github.com/docker/compose/releases/download/${COMPOSE_VERSION}/docker-compose-Linux-x86_64 \
+RUN curl -fsSL -o /usr/local/bin/docker-compose https://github.com/docker/compose/releases/download/v${COMPOSE_VERSION}/docker-compose-linux-x86_64 \
  && chmod +x /usr/local/bin/docker-compose
 RUN curl -fsSL -o /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/v${KUBECTL_VERSION}/bin/linux/amd64/kubectl \
  && chmod +x /usr/local/bin/kubectl
@@ -35,7 +35,8 @@ RUN cd /tmp \
  && cd kubectx \
  && mv kubectx /usr/local/bin/kctx \
  && mv kubens /usr/local/bin/kns \
- && mv completion/*.bash $COMPLETIONS \
+ && mv completion/kubectx.bash $COMPLETIONS/kctx.bash \
+ && mv completion/kubens.bash $COMPLETIONS/kns.bash \
  && cd .. \
  && rm -rf kubectx
 RUN cd /tmp \
@@ -47,11 +48,15 @@ RUN curl -fsSL https://github.com/derailed/k9s/releases/latest/download/k9s_$(un
 RUN curl -fsSL https://github.com/derailed/popeye/releases/latest/download/popeye_$(uname -s)_$(uname -m).tar.gz \
   | tar -zxvf- -C /usr/local/bin popeye
 COPY --from=k8s.gcr.io/kustomize/kustomize:v4.4.0 /app/kustomize /usr/local/bin/kustomize
+RUN kustomize completion bash > $COMPLETIONS/kustomize.bash
 COPY --from=tiltdev/tilt /usr/local/bin/tilt /usr/local/bin/tilt
+RUN tilt completion bash > $COMPLETIONS/tilt.bash
 RUN curl -fsSLo /usr/local/bin/skaffold https://storage.googleapis.com/skaffold/releases/latest/skaffold-linux-amd64 \
  && chmod +x /usr/local/bin/skaffold
+RUN skaffold completion bash > $COPMLETIONS/skaffold.bash
 RUN curl -fsSLo /usr/local/bin/kompose https://github.com/kubernetes/kompose/releases/latest/download/kompose-linux-amd64 \
  && chmod +x /usr/local/bin/kompose
+RUN kompose completion bash > $COMPLETIONS/kompose.bash
 RUN curl -fsSLo /usr/local/bin/kubeseal https://github.com/bitnami-labs/sealed-secrets/releases/download/v0.13.1/kubeseal-linux-amd64 \
  && chmod +x /usr/local/bin/kubeseal
 COPY --from=jid /go/bin/jid /usr/local/bin/jid
