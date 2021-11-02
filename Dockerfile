@@ -9,7 +9,7 @@ ENV \
  KUBECTL_VERSION=1.22.2 \
  SHIP_VERSION=0.51.3
 ENV COMPLETIONS=/usr/share/bash-completion/completions
-RUN apk add bash bash-completion curl git jq libintl ncurses openssl tmux vim apache2-utils openssh sudo
+RUN apk add bash bash-completion curl git jq libintl ncurses openssl tmux vim apache2-utils openssh sudo tree
 
 # Install a bunch of binaries, scripts, tools, etc.
 
@@ -46,6 +46,7 @@ RUN curl -fsSL https://github.com/derailed/k9s/releases/latest/download/k9s_$(un
   | tar -zxvf- -C /usr/local/bin k9s
 RUN curl -fsSL https://github.com/derailed/popeye/releases/latest/download/popeye_$(uname -s)_$(uname -m).tar.gz \
   | tar -zxvf- -C /usr/local/bin popeye
+COPY --from=k8s.gcr.io/kustomize/kustomize:v4.4.0 /app/kustomize /usr/local/bin/kustomize
 COPY --from=tiltdev/tilt /usr/local/bin/tilt /usr/local/bin/tilt
 RUN curl -fsSLo /usr/local/bin/skaffold https://storage.googleapis.com/skaffold/releases/latest/skaffold-linux-amd64 \
  && chmod +x /usr/local/bin/skaffold
