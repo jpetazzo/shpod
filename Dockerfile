@@ -57,8 +57,14 @@ RUN skaffold completion bash > $COMPLETIONS/skaffold.bash
 RUN curl -fsSLo /usr/local/bin/kompose https://github.com/kubernetes/kompose/releases/latest/download/kompose-linux-amd64 \
  && chmod +x /usr/local/bin/kompose
 RUN kompose completion bash > $COMPLETIONS/kompose.bash
-RUN curl -fsSLo /usr/local/bin/kubeseal https://github.com/bitnami-labs/sealed-secrets/releases/download/v0.13.1/kubeseal-linux-amd64 \
+RUN curl -fsSLo /usr/local/bin/kubeseal https://github.com/bitnami-labs/sealed-secrets/releases/download/v0.16.0/kubeseal-linux-amd64 \
  && chmod +x /usr/local/bin/kubeseal
+RUN set -e; \
+    for BIN in regbot regctl regsync; do \
+      curl -fsSLo /usr/local/bin/$BIN https://github.com/regclient/regclient/releases/download/v0.3.9/$BIN-linux-amd64 ;\
+      chmod +x /usr/local/bin/$BIN ;\
+      $BIN completion bash > $COMPLETIONS/$BIN.bash ;\
+    done
 COPY --from=jid /go/bin/jid /usr/local/bin/jid
 RUN echo trap exit TERM > /etc/profile.d/trapterm.sh
 
