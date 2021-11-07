@@ -29,8 +29,11 @@ and embarking a bunch of tools useful when working with Kubernetes:
 - stern
 - tilt
 
-It also includes tmux, a custom prompt, and completion for
-all of the above.
+It also includes:
+
+- completion for all these tools
+- tmux
+- an SSH server
 
 Its goal is to provide a normalized environment, to go
 with the training materials at https://container.training/,
@@ -39,6 +42,68 @@ of your exact Kubernetes setup.
 
 To use it, you need a Kubernetes cluster. You can use Minikube,
 microk8s, Docker Desktop, AKS, EKS, GKE, anything you like, really.
+
+If it runs with a pseudo-terminal, it will spawn a shell, and you
+can attach to that shell. If it runs without a pseudo-terminal,
+it will start an SSH server, and you can connect to that SSH
+server to obtain the shell.
+
+
+## Using with a pseudo-terminal
+
+Run it in a Pod and attach directly to it:
+```bash
+kubectl run shpod --restart=Never --rm -it --image=jpetazzo/shpod
+```
+
+This should give you a shell in a pod, with all the tools installed.
+Most Kubernetes commands won't work (you will get permission errors)
+until you create an appropriate RoleBinding or ClusterRoleBinding
+(see below for details).
+
+
+## Using without a pseudo-terminal
+
+Run as a Pod (or Deployment), then expose (or port-forward) to port
+22 in that Pod, and connect with an SSH client:
+```bash
+kubectl run shpod --image=jpetazzo/shpod
+kubectl wait pod shpod --for=condition=ready
+kubectl port-forward pod/shpod 2222:22
+ssh -l k8s -p 2222 localhost # the default password is "k8s"
+```
+
+Note: you can change the password by setting the `PASSWORD`
+environment variable.
+
+
+## Granting permissions
+
+By default, shpod uses the ServiceAccount of the Pod that it's
+running in; and by default (on most clusters) that ServiceAccount
+won't have much permissions, meaning that you will get errors like
+the following one:
+
+```console
+$ kubectl get pods
+Error from server (Forbidden): pods is forbidden: User "system:serviceaccount:default:default" cannot list resource "pods" in API group "" in the namespace "default"
+```
+
+If you want to use Kubernetes commands within shpod, you need
+to give permissions to that ServiceAccount.
+
+Assuming that you are running shpod in the `default` namespace
+and with the `default` ServiceAccount, you can run the following
+command to give `cluster-admin` privileges (=all privileges) to
+the commands running in shpod:
+
+```bash
+kubectl create clusterrolebinding shpod \
+        --clusterrole=shpod \
+        --serviceaccount=default:default
+```
+
+You can also use the one-liner below.
 
 
 ## One-liner usage
@@ -49,6 +114,15 @@ The [shpod.sh](shpod.sh) script will:
 - wait for the pod `shpod` to be ready,
 - attach to that pod,
 - delete resources created by the manifest when you exit the pod.
+
+The manifest will:
+
+- create the `shpod` Namespace,
+- create the `shpod` ServiceAccount in that Namespace,
+- create the `shpod` ClusterRoleBinding giving `cluster-admin`
+  privileges to that ServiceAccount,
+- create a Pod named `shpod`, using that ServiceAccount, with
+  a terminal (so that you can attach to that Pod and get a shell).
 
 To execute it:
 
@@ -96,15 +170,6 @@ kubectl delete clusterrolebinding,ns shpod
 ```
 
 
-## Internal details
-
-The YAML file is a Kubernetes manifest for a Pod, a ServiceAccount,
-a ClusterRoleBinding, and a Namespace to hold the Pod and ServiceAccount.
-
-The Pod uses image [jpetazzo/shpod](https://hub.docker.com/r/jpetazzo/shpod)
-on the Docker Hub, built from this repository (https://github.com/jpetazzo/shpod).
-
-
 ## Opening multiple sessions
 
 Shpod tries to detect if it is already running; and if it's the case,
@@ -112,3 +177,11 @@ it will try to start another process using `kubectl exec`. Note that
 if the first shpod process exits, Kubernetes will terminate all the
 other processes.
 
+
+## Special handling of kubeconfig
+
+If you have a ConfigMap named `kubeconfig` in the Namespace
+where shpod is running, it will extract the first file from
+that ConfigMap and use it to populate `~/.kube/config`.
+
+This lets you inject a custom kubeconfig file into shpod.

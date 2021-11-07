@@ -82,7 +82,6 @@ RUN mkdir /tmp/krew \
  && cd \
  && rm -rf /tmp/krew
 COPY --chown=1000:1000 bash_profile /home/k8s/.bash_profile
-COPY --chown=1000:1000 kubeconfig /home/k8s/.kube/config
 COPY --chown=1000:1000 vimrc /home/k8s/.vimrc
 COPY motd /etc/motd
 COPY setup-tailhist.sh /usr/local/bin
