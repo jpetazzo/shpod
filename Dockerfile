@@ -1,6 +1,10 @@
 FROM golang:alpine AS jid
 RUN apk add git
-RUN go get -u github.com/simeji/jid/cmd/jid
+RUN CGO_ENABLED=0 go install github.com/simeji/jid/cmd/jid@v0.7.6
+
+FROM golang:alpine AS kube-linter
+RUN apk add git
+RUN CGO_ENABLED=0 go install golang.stackrox.io/kube-linter/cmd/kube-linter@0.2.5
 
 FROM alpine
 ENV \
@@ -65,7 +69,9 @@ RUN set -e; \
       chmod +x /usr/local/bin/$BIN ;\
       $BIN completion bash > $COMPLETIONS/$BIN.bash ;\
     done
-COPY --from=jid /go/bin/jid /usr/local/bin/jid
+COPY --from=jid /go/bin/jid /usr/local/bin/
+COPY --from=kube-linter /go/bin/kube-linter /usr/local/bin/
+RUN kube-linter completion bash > $COMPLETIONS/kube-linter.bash
 RUN echo trap exit TERM > /etc/profile.d/trapterm.sh
 
 # Create user and finalize setup.
