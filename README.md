@@ -19,6 +19,7 @@ It includes:
 
 - ab (ApacheBench)
 - bash
+- crane
 - curl
 - Docker CLI
 - Docker Compose
@@ -32,10 +33,12 @@ It includes:
 - kube-ps1
 - kubeseal
 - kustomize
+- ngrok
 - popeye
 - regctl
 - ship
 - skaffold
+- skopeo
 - SSH
 - stern
 - tilt

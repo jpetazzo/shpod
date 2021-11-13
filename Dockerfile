@@ -13,6 +13,11 @@ ENV COMPOSE_VERSION=2.1.1
 RUN helper-curl bin docker-compose \
     https://github.com/docker/compose/releases/download/v${COMPOSE_VERSION}/docker-compose-linux-@UARCH
 
+# https://github.com/google/go-containerregistry/tree/main/cmd/crane
+FROM builder AS crane
+RUN go install github.com/google/go-containerregistry/cmd/crane@latest
+RUN cp $(find bin -name crane) /usr/local/bin
+
 # https://github.com/helm/helm/releases
 FROM builder AS helm
 ENV HELM_VERSION=3.7.1
@@ -69,6 +74,11 @@ ENV KUSTOMIZE_VERSION=4.4.1
 RUN helper-curl tar kustomize \
     https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v$KUSTOMIZE_VERSION/kustomize_v${KUSTOMIZE_VERSION}_linux_@GOARCH.tar.gz
 
+# https://ngrok.com/download
+FROM builder AS ngrok
+RUN helper-curl tar ngrok \
+    https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-@GOARCH.tgz
+
 # https://github.com/derailed/popeye/releases
 FROM builder AS popeye
 RUN helper-curl tar popeye \
@@ -108,9 +118,10 @@ RUN helper-curl tar tilt \
 
 FROM alpine
 ENV COMPLETIONS=/usr/share/bash-completion/completions
-RUN apk add apache2-utils bash bash-completion curl docker-cli file git jq libintl ncurses openssh openssl sudo tmux tree vim
+RUN apk add apache2-utils bash bash-completion curl docker-cli file git jq libintl ncurses openssh openssl skopeo sudo tmux tree vim
 
 COPY --from=compose     /usr/local/bin/docker-compose /usr/local/bin
+COPY --from=crane       /usr/local/bin/crane          /usr/local/bin
 COPY --from=helm        /usr/local/bin/helm           /usr/local/bin
 COPY --from=httping     /usr/local/bin/httping        /usr/local/bin
 COPY --from=jid         /usr/local/bin/jid            /usr/local/bin
@@ -118,6 +129,7 @@ COPY --from=kubectl     /usr/local/bin/kubectl        /usr/local/bin
 COPY --from=kube-linter /usr/local/bin/kube-linter    /usr/local/bin
 COPY --from=kubeseal    /usr/local/bin/kubeseal       /usr/local/bin
 COPY --from=kustomize   /usr/local/bin/kustomize      /usr/local/bin
+COPY --from=ngrok       /usr/local/bin/ngrok          /usr/local/bin
 COPY --from=popeye      /usr/local/bin/popeye         /usr/local/bin
 COPY --from=regctl      /usr/local/bin/regctl         /usr/local/bin
 COPY --from=ship        /usr/local/bin/ship           /usr/local/bin
@@ -126,6 +138,7 @@ COPY --from=stern       /usr/local/bin/stern          /usr/local/bin
 COPY --from=tilt        /usr/local/bin/tilt           /usr/local/bin
 
 RUN set -e ; for BIN in \
+    crane \
     helm \
     kubectl \
     kube-linter \
@@ -177,8 +190,10 @@ RUN ( \
     git --version ;\
     jq --version ;\
     ssh -V ;\
+    skopeo -v ;\
     tmux -V ;\
     docker-compose version ;\
+    echo "crane $(crane version)" ;\
     echo "Helm $(helm version --short)" ;\
     httping --version ;\
     jid --version ;\
@@ -186,6 +201,7 @@ RUN ( \
     echo "kube-linter $(kube-linter version)" ;\
     kubeseal --version ;\
     kustomize version --short ;\
+    ngrok version ;\
     echo "popeye $(popeye version | grep Version)" ;\
     echo "regctl $(regctl version --format={{.VCSTag}})" ;\
     echo "ship $(ship version | jq .version)" ;\
