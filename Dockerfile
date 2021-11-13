@@ -1,39 +1,113 @@
-FROM golang:alpine AS jid
-RUN apk add git
-RUN CGO_ENABLED=0 go install github.com/simeji/jid/cmd/jid@v0.7.6
+FROM golang:alpine AS builder
+RUN apk add curl git
+ENV CGO_ENABLED=0 \
+    COMPOSE_VERSION=2.0.1 \
+    HELM_VERSION=3.7.0 \
+    KUBECTL_VERSION=1.22.2 \
+    KUBELINTER_VERSION=0.2.5 \
+    KUBESEAL_VERSION=0.16.0 \
+    REGCLIENT_VERSION=0.3.9 \
+    SHIP_VERSION=0.51.3
 
-FROM golang:alpine AS kube-linter
-RUN apk add git
-RUN CGO_ENABLED=0 go install golang.stackrox.io/kube-linter/cmd/kube-linter@0.2.5
+FROM builder AS compose
+RUN curl -fsSL \
+    https://github.com/docker/compose/releases/download/v${COMPOSE_VERSION}/docker-compose-linux-x86_64 \
+    > /usr/local/bin/docker-compose \
+    && chmod +x /usr/local/bin/docker-compose
 
-FROM alpine
-ENV \
- COMPOSE_VERSION=2.0.1 \
- HELM_VERSION=3.7.0 \
- KUBECTL_VERSION=1.22.2 \
- SHIP_VERSION=0.51.3
-ENV COMPLETIONS=/usr/share/bash-completion/completions
-RUN apk add apache2-utils bash bash-completion curl file git jq libintl ncurses openssh openssl sudo tmux tree vim
+FROM builder AS helm
+RUN curl -fsSL \
+    https://get.helm.sh/helm-v${HELM_VERSION}-linux-amd64.tar.gz \
+    | tar zx -C /usr/local/bin --strip-components=1 linux-amd64/helm
 
-# Install a bunch of binaries, scripts, tools, etc.
-
-RUN curl -fsSL -o /usr/local/bin/docker-compose https://github.com/docker/compose/releases/download/v${COMPOSE_VERSION}/docker-compose-linux-x86_64 \
- && chmod +x /usr/local/bin/docker-compose
-RUN curl -fsSL -o /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/v${KUBECTL_VERSION}/bin/linux/amd64/kubectl \
- && chmod +x /usr/local/bin/kubectl
-RUN kubectl completion bash > $COMPLETIONS/kubectl.bash
-COPY --from=ghcr.io/stern/stern:latest /usr/local/bin/stern /usr/local/bin/stern
-RUN stern --completion bash > $COMPLETIONS/stern.bash
-RUN curl -fsSL https://get.helm.sh/helm-v${HELM_VERSION}-linux-amd64.tar.gz \
-  | tar zx -C /usr/local/bin --strip-components=1 linux-amd64/helm
-RUN helm completion bash > $COMPLETIONS/helm.bash
-RUN curl -fsSL https://github.com/replicatedhq/ship/releases/download/v${SHIP_VERSION}/ship_${SHIP_VERSION}_linux_amd64.tar.gz \
-  | tar zx -C /usr/local/bin ship
 # This is embarrassing, but I can't get httping to compile correctly with musl.
 # It reports negative times. So, I found this random binary here. Shrug.
 # FIXME: I found the cause of the issue. It's fixed in Bret's branch. Backport the fix eventually.
-RUN curl -fsSL https://github.com/static-linux/static-binaries-i386/raw/4266c69990ae11315bad7b928f85b6c8e605ef14/httping-2.4.tar.gz \
-  | tar zx -C /usr/local/bin --strip-components=1 httping-2.4/httping
+FROM builder AS httping
+RUN curl -fsSL \
+    https://github.com/static-linux/static-binaries-i386/raw/4266c69990ae11315bad7b928f85b6c8e605ef14/httping-2.4.tar.gz \
+    | tar zx -C /usr/local/bin --strip-components=1 httping-2.4/httping
+
+FROM builder AS jid
+RUN go install github.com/simeji/jid/cmd/jid@v0.7.6
+
+FROM builder AS k9s
+RUN curl -fsSL \
+    https://github.com/derailed/k9s/releases/latest/download/k9s_$(uname -s)_$(uname -m).tar.gz \
+    | tar -zxvf- -C /usr/local/bin k9s
+
+FROM builder AS kompose
+RUN curl -fsSL \
+    https://github.com/kubernetes/kompose/releases/latest/download/kompose-linux-amd64 \
+    >  /usr/local/bin/kompose \
+    && chmod +x /usr/local/bin/kompose
+
+FROM builder AS kubectl
+RUN curl -fsSL \
+    https://storage.googleapis.com/kubernetes-release/release/v${KUBECTL_VERSION}/bin/linux/amd64/kubectl \
+    > /usr/local/bin/kubectl \
+    && chmod +x /usr/local/bin/kubectl
+
+FROM builder AS kube-linter
+RUN go install golang.stackrox.io/kube-linter/cmd/kube-linter@$KUBELINTER_VERSION
+
+FROM builder AS kubeseal
+RUN curl -fsSL \
+    https://github.com/bitnami-labs/sealed-secrets/releases/download/v$KUBESEAL_VERSION/kubeseal-linux-amd64 \
+    > /usr/local/bin/kubeseal \
+    && chmod +x /usr/local/bin/kubeseal
+
+FROM builder AS popeye
+RUN curl -fsSL \
+    https://github.com/derailed/popeye/releases/latest/download/popeye_$(uname -s)_$(uname -m).tar.gz \
+    | tar -zxvf- -C /usr/local/bin popeye
+
+FROM builder AS regctl
+RUN curl -fsSL \
+    https://github.com/regclient/regclient/releases/download/v$REGCLIENT_VERSION/regctl-linux-amd64 \
+    > /usr/local/bin/regctl \
+    && chmod +x /usr/local/bin/regctl
+
+FROM builder AS ship
+RUN curl -fsSL \
+    https://github.com/replicatedhq/ship/releases/download/v${SHIP_VERSION}/ship_${SHIP_VERSION}_linux_amd64.tar.gz \
+    | tar zx -C /usr/local/bin ship
+
+FROM builder AS skaffold
+RUN curl -fsSL \
+    https://storage.googleapis.com/skaffold/releases/latest/skaffold-linux-amd64 \
+    > /usr/local/bin/skaffold \
+    && chmod +x /usr/local/bin/skaffold
+
+FROM alpine
+ENV COMPLETIONS=/usr/share/bash-completion/completions
+RUN apk add apache2-utils bash bash-completion curl file git jq libintl ncurses openssh openssl sudo tmux tree vim
+
+COPY --from=compose /usr/local/bin/docker-compose /usr/local/bin
+COPY --from=helm /usr/local/bin/helm /usr/local/bin
+COPY --from=httping /usr/local/bin/httping /usr/local/bin
+COPY --from=jid /go/bin/jid /usr/local/bin
+COPY --from=kubectl /usr/local/bin/kubectl /usr/local/bin
+COPY --from=kube-linter /go/bin/kube-linter /usr/local/bin
+COPY --from=kubeseal /usr/local/bin/kubeseal /usr/local/bin
+COPY --from=k8s.gcr.io/kustomize/kustomize:v4.4.0 /app/kustomize /usr/local/bin
+COPY --from=ghcr.io/stern/stern:latest /usr/local/bin/stern /usr/local/bin
+COPY --from=popeye /usr/local/bin/popeye /usr/local/bin
+COPY --from=regctl /usr/local/bin/regctl /usr/local/bin
+COPY --from=ship /usr/local/bin/ship /usr/local/bin
+COPY --from=skaffold /usr/local/bin/skaffold /usr/local/bin
+COPY --from=tiltdev/tilt /usr/local/bin/tilt /usr/local/bin
+
+RUN set -e ; for BIN in \
+    helm \
+    kubectl \
+    kube-linter \
+    kustomize \
+    regctl \
+    skaffold \
+    tilt \
+    ; do echo $BIN ; $BIN completion bash > $COMPLETIONS/$BIN.bash ; done
+
 RUN cd /tmp \
  && git clone https://github.com/ahmetb/kubectx \
  && cd kubectx \
@@ -47,32 +121,6 @@ RUN cd /tmp \
  && git clone https://github.com/jonmosco/kube-ps1 \
  && cp kube-ps1/kube-ps1.sh /etc/profile.d/ \
  && rm -rf kube-ps1
-RUN curl -fsSL https://github.com/derailed/k9s/releases/latest/download/k9s_$(uname -s)_$(uname -m).tar.gz \
-  | tar -zxvf- -C /usr/local/bin k9s
-RUN curl -fsSL https://github.com/derailed/popeye/releases/latest/download/popeye_$(uname -s)_$(uname -m).tar.gz \
-  | tar -zxvf- -C /usr/local/bin popeye
-COPY --from=k8s.gcr.io/kustomize/kustomize:v4.4.0 /app/kustomize /usr/local/bin/kustomize
-RUN kustomize completion bash > $COMPLETIONS/kustomize.bash
-COPY --from=tiltdev/tilt /usr/local/bin/tilt /usr/local/bin/tilt
-RUN tilt completion bash > $COMPLETIONS/tilt.bash
-RUN curl -fsSLo /usr/local/bin/skaffold https://storage.googleapis.com/skaffold/releases/latest/skaffold-linux-amd64 \
- && chmod +x /usr/local/bin/skaffold
-RUN skaffold completion bash > $COMPLETIONS/skaffold.bash
-RUN curl -fsSLo /usr/local/bin/kompose https://github.com/kubernetes/kompose/releases/latest/download/kompose-linux-amd64 \
- && chmod +x /usr/local/bin/kompose
-RUN kompose completion bash > $COMPLETIONS/kompose.bash
-RUN curl -fsSLo /usr/local/bin/kubeseal https://github.com/bitnami-labs/sealed-secrets/releases/download/v0.16.0/kubeseal-linux-amd64 \
- && chmod +x /usr/local/bin/kubeseal
-RUN set -e; \
-    for BIN in regbot regctl regsync; do \
-      curl -fsSLo /usr/local/bin/$BIN https://github.com/regclient/regclient/releases/download/v0.3.9/$BIN-linux-amd64 ;\
-      chmod +x /usr/local/bin/$BIN ;\
-      $BIN completion bash > $COMPLETIONS/$BIN.bash ;\
-    done
-COPY --from=jid /go/bin/jid /usr/local/bin/
-COPY --from=kube-linter /go/bin/kube-linter /usr/local/bin/
-RUN kube-linter completion bash > $COMPLETIONS/kube-linter.bash
-RUN echo trap exit TERM > /etc/profile.d/trapterm.sh
 
 # Create user and finalize setup.
 

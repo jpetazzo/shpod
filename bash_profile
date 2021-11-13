@@ -54,3 +54,5 @@ export HISTFILESIZE=9999
 shopt -s histappend
 trap 'history -a' DEBUG
 export HISTFILE=~/.history
+
+trap exit TERM
