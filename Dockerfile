@@ -87,7 +87,7 @@ RUN helper-curl tar tilt \
 
 FROM alpine
 ENV COMPLETIONS=/usr/share/bash-completion/completions
-RUN apk add apache2-utils bash bash-completion curl file git jq libintl ncurses openssh openssl sudo tmux tree vim
+RUN apk add apache2-utils bash bash-completion curl docker-cli file git jq libintl ncurses openssh openssl sudo tmux tree vim
 
 COPY --from=compose     /usr/local/bin/docker-compose /usr/local/bin
 COPY --from=helm        /usr/local/bin/helm           /usr/local/bin
