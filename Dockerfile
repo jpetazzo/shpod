@@ -1,28 +1,33 @@
-FROM golang:alpine AS builder
+FROM --platform=$BUILDPLATFORM golang:alpine AS builder
 RUN apk add curl git
-ENV CGO_ENABLED=0 \
-    COMPOSE_VERSION=2.0.1 \
-    HELM_VERSION=3.7.0 \
+ARG BUILDARCH TARGETARCH
+ENV BUILDARCH=$BUILDARCH \
+    CGO_ENABLED=0 \
+    COMPOSE_VERSION=2.1.1 \
+    GOARCH=$TARGETARCH \
+    HELM_VERSION=3.7.1 \
     JID_VERSION=0.7.6 \
     KUBECTL_VERSION=1.22.2 \
     KUBELINTER_VERSION=0.2.5 \
     KUBESEAL_VERSION=0.16.0 \
+    KUSTOMIZE_VERSION=4.4.1 \
     REGCLIENT_VERSION=0.3.9 \
-    SHIP_VERSION=0.51.3
+    SHIP_VERSION=0.51.3 \
+    STERN_VERSION=1.20.1 \
+    TARGETARCH=$TARGETARCH \
+    TILT_VERSION=0.23.0
+COPY helper-* /bin
 
 FROM builder AS compose
-RUN curl -fsSL \
-    https://github.com/docker/compose/releases/download/v${COMPOSE_VERSION}/docker-compose-linux-x86_64 \
-    > /usr/local/bin/docker-compose \
-    && chmod +x /usr/local/bin/docker-compose
+RUN helper-curl bin docker-compose \
+    https://github.com/docker/compose/releases/download/v${COMPOSE_VERSION}/docker-compose-linux-@UARCH
 
 FROM builder AS helm
-RUN curl -fsSL \
-    https://get.helm.sh/helm-v${HELM_VERSION}-linux-amd64.tar.gz \
-    | tar zx -C /usr/local/bin --strip-components=1 linux-amd64/helm
+RUN helper-curl tar "--strip-components=1 linux-@GOARCH/helm" \
+    https://get.helm.sh/helm-v${HELM_VERSION}-linux-@GOARCH.tar.gz
 
-FROM builder AS httping
-RUN apk add build-base musl-libintl gettext
+FROM alpine AS httping
+RUN apk add build-base gettext git musl-libintl
 RUN git clone https://salsa.debian.org/debian/httping
 WORKDIR httping
 RUN sed -i s/60/0/ utils.c
@@ -30,73 +35,74 @@ RUN make install BINDIR=/usr/local/bin
 
 FROM builder AS jid
 RUN go install github.com/simeji/jid/cmd/jid@v$JID_VERSION
+RUN cp $(find bin -name jid) /usr/local/bin
 
 FROM builder AS k9s
-RUN curl -fsSL \
-    https://github.com/derailed/k9s/releases/latest/download/k9s_$(uname -s)_$(uname -m).tar.gz \
-    | tar -zxvf- -C /usr/local/bin k9s
+RUN helper-curl tar k9s \
+    https://github.com/derailed/k9s/releases/latest/download/k9s_Linux_@WTFARCH.tar.gz
 
 FROM builder AS kompose
-RUN curl -fsSL \
-    https://github.com/kubernetes/kompose/releases/latest/download/kompose-linux-amd64 \
-    >  /usr/local/bin/kompose \
-    && chmod +x /usr/local/bin/kompose
+RUN helper-curl bin kompose \
+    https://github.com/kubernetes/kompose/releases/latest/download/kompose-linux-@GOARCH
 
 FROM builder AS kubectl
-RUN curl -fsSL \
-    https://storage.googleapis.com/kubernetes-release/release/v${KUBECTL_VERSION}/bin/linux/amd64/kubectl \
-    > /usr/local/bin/kubectl \
-    && chmod +x /usr/local/bin/kubectl
+RUN helper-curl bin kubectl \
+    https://storage.googleapis.com/kubernetes-release/release/v${KUBECTL_VERSION}/bin/linux/@GOARCH/kubectl 
 
 FROM builder AS kube-linter
 RUN go install golang.stackrox.io/kube-linter/cmd/kube-linter@$KUBELINTER_VERSION
+RUN cp $(find bin -name kube-linter) /usr/local/bin
 
 FROM builder AS kubeseal
-RUN curl -fsSL \
-    https://github.com/bitnami-labs/sealed-secrets/releases/download/v$KUBESEAL_VERSION/kubeseal-linux-amd64 \
-    > /usr/local/bin/kubeseal \
-    && chmod +x /usr/local/bin/kubeseal
+RUN helper-curl bin kubeseal \
+    https://github.com/bitnami-labs/sealed-secrets/releases/download/v$KUBESEAL_VERSION/kubeseal-@KSARCH
+
+FROM builder AS kustomize
+RUN helper-curl tar kustomize \
+    https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v$KUSTOMIZE_VERSION/kustomize_v${KUSTOMIZE_VERSION}_linux_@GOARCH.tar.gz
 
 FROM builder AS popeye
-RUN curl -fsSL \
-    https://github.com/derailed/popeye/releases/latest/download/popeye_$(uname -s)_$(uname -m).tar.gz \
-    | tar -zxvf- -C /usr/local/bin popeye
+RUN helper-curl tar popeye \
+    https://github.com/derailed/popeye/releases/latest/download/popeye_Linux_@WTFARCH.tar.gz
 
 FROM builder AS regctl
-RUN curl -fsSL \
-    https://github.com/regclient/regclient/releases/download/v$REGCLIENT_VERSION/regctl-linux-amd64 \
-    > /usr/local/bin/regctl \
-    && chmod +x /usr/local/bin/regctl
+RUN helper-curl bin regctl \
+    https://github.com/regclient/regclient/releases/download/v$REGCLIENT_VERSION/regctl-linux-@GOARCH
 
 FROM builder AS ship
-RUN curl -fsSL \
-    https://github.com/replicatedhq/ship/releases/download/v${SHIP_VERSION}/ship_${SHIP_VERSION}_linux_amd64.tar.gz \
-    | tar zx -C /usr/local/bin ship
+RUN helper-curl tar ship \
+    https://github.com/replicatedhq/ship/releases/download/v${SHIP_VERSION}/ship_${SHIP_VERSION}_linux_@GOARCH.tar.gz
 
 FROM builder AS skaffold
-RUN curl -fsSL \
-    https://storage.googleapis.com/skaffold/releases/latest/skaffold-linux-amd64 \
-    > /usr/local/bin/skaffold \
-    && chmod +x /usr/local/bin/skaffold
+RUN helper-curl bin skaffold \
+    https://storage.googleapis.com/skaffold/releases/latest/skaffold-linux-@GOARCH
+
+FROM builder AS stern
+RUN helper-curl tar "--strip-components=1 stern_${STERN_VERSION}_linux_@GOARCH/stern" \
+    https://github.com/stern/stern/releases/download/v${STERN_VERSION}/stern_${STERN_VERSION}_linux_@GOARCH.tar.gz
+
+FROM builder AS tilt
+RUN helper-curl tar tilt \
+    https://github.com/tilt-dev/tilt/releases/download/v${TILT_VERSION}/tilt.${TILT_VERSION}.linux.@WTFARCH.tar.gz
 
 FROM alpine
 ENV COMPLETIONS=/usr/share/bash-completion/completions
 RUN apk add apache2-utils bash bash-completion curl file git jq libintl ncurses openssh openssl sudo tmux tree vim
 
-COPY --from=compose /usr/local/bin/docker-compose /usr/local/bin
-COPY --from=helm /usr/local/bin/helm /usr/local/bin
-COPY --from=httping /usr/local/bin/httping /usr/local/bin
-COPY --from=jid /go/bin/jid /usr/local/bin
-COPY --from=kubectl /usr/local/bin/kubectl /usr/local/bin
-COPY --from=kube-linter /go/bin/kube-linter /usr/local/bin
-COPY --from=kubeseal /usr/local/bin/kubeseal /usr/local/bin
-COPY --from=k8s.gcr.io/kustomize/kustomize:v4.4.0 /app/kustomize /usr/local/bin
-COPY --from=ghcr.io/stern/stern:latest /usr/local/bin/stern /usr/local/bin
-COPY --from=popeye /usr/local/bin/popeye /usr/local/bin
-COPY --from=regctl /usr/local/bin/regctl /usr/local/bin
-COPY --from=ship /usr/local/bin/ship /usr/local/bin
-COPY --from=skaffold /usr/local/bin/skaffold /usr/local/bin
-COPY --from=tiltdev/tilt /usr/local/bin/tilt /usr/local/bin
+COPY --from=compose     /usr/local/bin/docker-compose /usr/local/bin
+COPY --from=helm        /usr/local/bin/helm           /usr/local/bin
+COPY --from=httping     /usr/local/bin/httping        /usr/local/bin
+COPY --from=jid         /usr/local/bin/jid            /usr/local/bin
+COPY --from=kubectl     /usr/local/bin/kubectl        /usr/local/bin
+COPY --from=kube-linter /usr/local/bin/kube-linter    /usr/local/bin
+COPY --from=kubeseal    /usr/local/bin/kubeseal       /usr/local/bin
+COPY --from=kustomize   /usr/local/bin/kustomize      /usr/local/bin
+COPY --from=popeye      /usr/local/bin/popeye         /usr/local/bin
+COPY --from=regctl      /usr/local/bin/regctl         /usr/local/bin
+COPY --from=ship        /usr/local/bin/ship           /usr/local/bin
+COPY --from=skaffold    /usr/local/bin/skaffold       /usr/local/bin
+COPY --from=stern       /usr/local/bin/stern          /usr/local/bin
+COPY --from=tilt        /usr/local/bin/tilt           /usr/local/bin
 
 RUN set -e ; for BIN in \
     helm \

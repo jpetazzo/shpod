@@ -1,0 +1,71 @@
+#!/bin/sh
+
+set -e
+
+TYPE=$1
+BIN_OR_ARGS=$2
+URL=$3
+
+case $TARGETARCH in
+amd64)
+  GOARCH=amd64
+  KSARCH=linux-amd64
+  UARCH=x86_64
+  WTFARCH=x86_64
+  ;;
+arm64)
+  GOARCH=arm64
+  KSARCH=arm64
+  UARCH=aarch64
+  WTFARCH=arm64
+  ;;
+arm)
+  GOARCH=arm
+  KSARCH=arm
+  UARCH=armv7
+  WTFARCH=arm
+  ;;
+*)
+  echo "Unsupported architecture: $TARGETARCH."
+  GOARCH=$TARGETARCH
+  KSARCH=$TARGETARCH
+  UARCH=$TARGETARCH
+  WTFARCH=$TARGETARCH
+  ;;
+esac
+
+mangle() {
+  echo $1 | sed \
+  -e s/@GOARCH/$GOARCH/g \
+  -e s/@KSARCH/$KSARCH/g \
+  -e s/@UARCH/$UARCH/g \
+  -e s/@WTFARCH/$WTFARCH/g \
+  #
+}
+
+URL=$(mangle $URL)
+BIN_OR_ARGS=$(mangle "$BIN_OR_ARGS")
+
+if ! curl -fsSLI $URL >/dev/null; then
+  echo "URL not found: $URL"
+  BIN=${BIN_OR_ARGS##*/}
+  echo "Installing placeholder: $BIN"
+  cp /bin/helper-unsupported /usr/local/bin/$BIN
+  exit 0
+fi
+
+case "$TYPE" in
+bin)
+  BIN=$BIN_OR_ARGS
+  curl -fsSL $URL > /usr/local/bin/$BIN
+  chmod +x /usr/local/bin/$BIN
+  ;;
+tar)
+  ARGS=$BIN_OR_ARGS
+  curl -fsSL $URL | tar -zxvf- -C /usr/local/bin $ARGS
+  ;;
+*)
+  echo "Unrecognized download type: $TYPE"
+  exit 1
+  ;;
+esac
