@@ -153,10 +153,11 @@ RUN echo k8s:x:1000: >> /etc/group \
  && echo "k8s ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/k8s \
  && mkdir /home/k8s \
  && chown -R k8s:k8s /home/k8s/
+ARG TARGETARCH
 RUN mkdir /tmp/krew \
  && cd /tmp/krew \
- && curl -fsSL https://github.com/kubernetes-sigs/krew/releases/latest/download/krew-linux_amd64.tar.gz | tar -zxf- \
- && sudo -u k8s -H ./krew-linux_amd64 install krew \
+ && curl -fsSL https://github.com/kubernetes-sigs/krew/releases/latest/download/krew-linux_$TARGETARCH.tar.gz | tar -zxf- \
+ && sudo -u k8s -H ./krew-linux_$TARGETARCH install krew \
  && cd \
  && rm -rf /tmp/krew
 COPY --chown=1000:1000 bash_profile /home/k8s/.bash_profile
