@@ -3,6 +3,7 @@ RUN apk add curl git
 ENV CGO_ENABLED=0 \
     COMPOSE_VERSION=2.0.1 \
     HELM_VERSION=3.7.0 \
+    JID_VERSION=0.7.6 \
     KUBECTL_VERSION=1.22.2 \
     KUBELINTER_VERSION=0.2.5 \
     KUBESEAL_VERSION=0.16.0 \
@@ -28,7 +29,7 @@ RUN sed -i s/60/0/ utils.c
 RUN make install BINDIR=/usr/local/bin
 
 FROM builder AS jid
-RUN go install github.com/simeji/jid/cmd/jid@v0.7.6
+RUN go install github.com/simeji/jid/cmd/jid@v$JID_VERSION
 
 FROM builder AS k9s
 RUN curl -fsSL \
