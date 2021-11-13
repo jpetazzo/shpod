@@ -12,28 +12,36 @@ Dockerfile!
 ## What's this?
 
 `shpod` is a container image based on the Alpine distribution
-and embarking a bunch of tools useful when working with Kubernetes:
+and embarking a bunch of tools useful when working with containers,
+Docker, and Kubernetes.
 
-- compose
-- helm
+It includes:
+
+- ab (ApacheBench)
+- bash
+- curl
+- Docker CLI
+- Docker Compose
+- git
+- Helm
 - jid
 - jq
-- krew
 - kubectl
 - kubectx + kubens
+- kube-linter
 - kube-ps1
 - kubeseal
-- k9s
+- kustomize
+- popeye
+- regctl
 - ship
 - skaffold
+- SSH
 - stern
 - tilt
-
-It also includes:
-
-- completion for all these tools
 - tmux
-- an SSH server
+
+It also includes completion for most of these tools.
 
 Its goal is to provide a normalized environment, to go
 with the training materials at https://container.training/,
@@ -185,3 +193,11 @@ where shpod is running, it will extract the first file from
 that ConfigMap and use it to populate `~/.kube/config`.
 
 This lets you inject a custom kubeconfig file into shpod.
+
+
+## Support for other architectures
+
+As of November 2021, the Dockerfile in this repository should be able
+to build images for other architectures. However, when trying to install
+a compiled binary that is not available for another architecture, a dummy
+placeholder will be installed instead.

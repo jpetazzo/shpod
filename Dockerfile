@@ -19,8 +19,11 @@ ENV HELM_VERSION=3.7.1
 RUN helper-curl tar "--strip-components=1 linux-@GOARCH/helm" \
     https://get.helm.sh/helm-v${HELM_VERSION}-linux-@GOARCH.tar.gz
 
+# Use emulation instead of cross-compilation for that one.
+# (The source is small enough, so I don't know if cross-compilation
+# would be worth the effort.)
 FROM alpine AS httping
-RUN apk add build-base gettext git musl-libintl
+RUN apk add build-base fftw-dev gettext git musl-libintl ncurses-dev
 RUN git clone https://salsa.debian.org/debian/httping
 WORKDIR httping
 RUN sed -i s/60/0/ utils.c
@@ -164,6 +167,32 @@ COPY --chown=1000:1000 bash_profile /home/k8s/.bash_profile
 COPY --chown=1000:1000 vimrc /home/k8s/.vimrc
 COPY motd /etc/motd
 COPY setup-tailhist.sh /usr/local/bin
+
+# Generate a list of all installed versions.
+RUN ( \
+    ab -V | head -n1 ;\
+    bash --version | head -n1 ;\
+    curl --version | head -n1 ;\
+    docker version --format="Docker {{.Client.Version}}" ;\
+    git --version ;\
+    jq --version ;\
+    ssh -V ;\
+    tmux -V ;\
+    docker-compose version ;\
+    echo "Helm $(helm version --short)" ;\
+    httping --version ;\
+    jid --version ;\
+    echo "kubectl $(kubectl version --short --client)" ;\
+    echo "kube-linter $(kube-linter version)" ;\
+    kubeseal --version ;\
+    kustomize version --short ;\
+    echo "popeye $(popeye version | grep Version)" ;\
+    echo "regctl $(regctl version --format={{.VCSTag}})" ;\
+    echo "ship $(ship version | jq .version)" ;\
+    echo "skaffold $(skaffold version)" ;\
+    echo "stern $(stern --version | grep ^version)" ;\
+    echo "tilt $(tilt version)" ;\
+    ) > versions.txt
 
 # If there is a tty, give us a shell.
 # (This happens e.g. when we do "docker run -ti jpetazzo/shpod".)
