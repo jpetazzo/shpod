@@ -20,13 +20,12 @@ RUN curl -fsSL \
     https://get.helm.sh/helm-v${HELM_VERSION}-linux-amd64.tar.gz \
     | tar zx -C /usr/local/bin --strip-components=1 linux-amd64/helm
 
-# This is embarrassing, but I can't get httping to compile correctly with musl.
-# It reports negative times. So, I found this random binary here. Shrug.
-# FIXME: I found the cause of the issue. It's fixed in Bret's branch. Backport the fix eventually.
 FROM builder AS httping
-RUN curl -fsSL \
-    https://github.com/static-linux/static-binaries-i386/raw/4266c69990ae11315bad7b928f85b6c8e605ef14/httping-2.4.tar.gz \
-    | tar zx -C /usr/local/bin --strip-components=1 httping-2.4/httping
+RUN apk add build-base musl-libintl gettext
+RUN git clone https://salsa.debian.org/debian/httping
+WORKDIR httping
+RUN sed -i s/60/0/ utils.c
+RUN make install BINDIR=/usr/local/bin
 
 FROM builder AS jid
 RUN go install github.com/simeji/jid/cmd/jid@v0.7.6
