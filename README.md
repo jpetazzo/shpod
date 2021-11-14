@@ -43,6 +43,7 @@ It includes:
 - stern
 - tilt
 - tmux
+- yq
 
 It also includes completion for most of these tools.
 

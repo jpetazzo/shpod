@@ -9,7 +9,7 @@ COPY helper-* /bin
 
 # https://github.com/docker/compose/releases
 FROM builder AS compose
-ENV COMPOSE_VERSION=2.1.1
+ARG COMPOSE_VERSION=2.1.1
 RUN helper-curl bin docker-compose \
     https://github.com/docker/compose/releases/download/v${COMPOSE_VERSION}/docker-compose-linux-@UARCH
 
@@ -20,7 +20,7 @@ RUN cp $(find bin -name crane) /usr/local/bin
 
 # https://github.com/helm/helm/releases
 FROM builder AS helm
-ENV HELM_VERSION=3.7.1
+ARG HELM_VERSION=3.7.1
 RUN helper-curl tar "--strip-components=1 linux-@GOARCH/helm" \
     https://get.helm.sh/helm-v${HELM_VERSION}-linux-@GOARCH.tar.gz
 
@@ -36,7 +36,7 @@ RUN make install BINDIR=/usr/local/bin
 
 # https://github.com/simeji/jid/releases
 FROM builder AS jid
-ENV JID_VERSION=0.7.6
+ARG JID_VERSION=0.7.6
 RUN go install github.com/simeji/jid/cmd/jid@v$JID_VERSION
 RUN cp $(find bin -name jid) /usr/local/bin
 
@@ -52,25 +52,25 @@ RUN helper-curl bin kompose \
 
 # https://github.com/kubernetes/kubernetes/releases
 FROM builder AS kubectl
-ENV KUBECTL_VERSION=1.22.3
+ARG KUBECTL_VERSION=1.22.3
 RUN helper-curl bin kubectl \
     https://storage.googleapis.com/kubernetes-release/release/v${KUBECTL_VERSION}/bin/linux/@GOARCH/kubectl 
 
 # https://github.com/stackrox/kube-linter/releases
 FROM builder AS kube-linter
-ENV KUBELINTER_VERSION=0.2.5
+ARG KUBELINTER_VERSION=0.2.5
 RUN go install golang.stackrox.io/kube-linter/cmd/kube-linter@$KUBELINTER_VERSION
 RUN cp $(find bin -name kube-linter) /usr/local/bin
 
 # https://github.com/bitnami-labs/sealed-secrets/releases
 FROM builder AS kubeseal
-ENV KUBESEAL_VERSION=0.16.0
+ARG KUBESEAL_VERSION=0.16.0
 RUN helper-curl bin kubeseal \
     https://github.com/bitnami-labs/sealed-secrets/releases/download/v$KUBESEAL_VERSION/kubeseal-@KSARCH
 
 # https://github.com/kubernetes-sigs/kustomize/releases
 FROM builder AS kustomize
-ENV KUSTOMIZE_VERSION=4.4.1
+ARG KUSTOMIZE_VERSION=4.4.1
 RUN helper-curl tar kustomize \
     https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v$KUSTOMIZE_VERSION/kustomize_v${KUSTOMIZE_VERSION}_linux_@GOARCH.tar.gz
 
@@ -86,7 +86,7 @@ RUN helper-curl tar popeye \
 
 # https://github.com/regclient/regclient/releases
 FROM builder AS regctl
-ENV REGCLIENT_VERSION=0.3.9
+ARG REGCLIENT_VERSION=0.3.9
 RUN helper-curl bin regctl \
     https://github.com/regclient/regclient/releases/download/v$REGCLIENT_VERSION/regctl-linux-@GOARCH
 
@@ -95,7 +95,7 @@ RUN helper-curl bin regctl \
 # to be available anymore in more recent versions (or requires some work
 # to adapt). Also, it's not available on all platforms and doesn't compile.
 FROM builder AS ship
-ENV SHIP_VERSION=0.51.3
+ARG SHIP_VERSION=0.51.3
 RUN helper-curl tar ship \
     https://github.com/replicatedhq/ship/releases/download/v${SHIP_VERSION}/ship_${SHIP_VERSION}_linux_@GOARCH.tar.gz
 
@@ -106,19 +106,19 @@ RUN helper-curl bin skaffold \
 
 # https://github.com/stern/stern/releases
 FROM builder AS stern
-ENV STERN_VERSION=1.20.1
+ARG STERN_VERSION=1.20.1
 RUN helper-curl tar "--strip-components=1 stern_${STERN_VERSION}_linux_@GOARCH/stern" \
     https://github.com/stern/stern/releases/download/v${STERN_VERSION}/stern_${STERN_VERSION}_linux_@GOARCH.tar.gz
 
 # https://github.com/tilt-dev/tilt/releases/
 FROM builder AS tilt
-ENV TILT_VERSION=0.23.0
+ARG TILT_VERSION=0.23.0
 RUN helper-curl tar tilt \
     https://github.com/tilt-dev/tilt/releases/download/v${TILT_VERSION}/tilt.${TILT_VERSION}.linux.@WTFARCH.tar.gz
 
 FROM alpine
 ENV COMPLETIONS=/usr/share/bash-completion/completions
-RUN apk add apache2-utils bash bash-completion curl docker-cli file git jq libintl ncurses openssh openssl skopeo sudo tmux tree vim
+RUN apk add apache2-utils bash bash-completion curl docker-cli file git jq libintl ncurses openssh openssl skopeo sudo tmux tree vim yq
 
 COPY --from=compose     /usr/local/bin/docker-compose /usr/local/bin
 COPY --from=crane       /usr/local/bin/crane          /usr/local/bin
@@ -146,7 +146,8 @@ RUN set -e ; for BIN in \
     regctl \
     skaffold \
     tilt \
-    ; do echo $BIN ; $BIN completion bash > $COMPLETIONS/$BIN.bash ; done
+    ; do echo $BIN ; $BIN completion bash > $COMPLETIONS/$BIN.bash ; done ;\
+    yq shell-completion bash > $COMPLETIONS/yq.bash
 
 RUN cd /tmp \
  && git clone https://github.com/ahmetb/kubectx \
@@ -192,6 +193,7 @@ RUN ( \
     ssh -V ;\
     skopeo -v ;\
     tmux -V ;\
+    yq --version ;\
     docker-compose version ;\
     echo "crane $(crane version)" ;\
     echo "Helm $(helm version --short)" ;\
