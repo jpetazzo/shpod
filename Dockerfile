@@ -5,7 +5,7 @@ ENV BUILDARCH=$BUILDARCH \
     CGO_ENABLED=0 \
     GOARCH=$TARGETARCH \
     TARGETARCH=$TARGETARCH
-COPY helper-* /bin
+COPY helper-* /bin/
 
 # https://github.com/docker/compose/releases
 FROM builder AS compose
@@ -64,7 +64,7 @@ RUN cp $(find bin -name kube-linter) /usr/local/bin
 
 # https://github.com/bitnami-labs/sealed-secrets/releases
 FROM builder AS kubeseal
-ARG KUBESEAL_VERSION=0.16.0
+ARG KUBESEAL_VERSION=0.17.0
 RUN helper-curl bin kubeseal \
     https://github.com/bitnami-labs/sealed-secrets/releases/download/v$KUBESEAL_VERSION/kubeseal-@KSARCH
 
