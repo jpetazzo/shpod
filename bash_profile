@@ -3,26 +3,32 @@
 if ! [ -f ~/.kube/config ]; then
   # If there is a ConfigMap named 'kubeconfig',
   # extract the kubeconfig file from there.
-  if kubectl get configmap kubeconfig >&/dev/null; then
-    echo "✏️ Populating .kube/config with ConfigMap kubeconfig."
-    kubectl get configmap kubeconfig -o json |
-      jq '.data | to_entries | .[0].value' > ~/.kube/config
-  else
-    SADIR=/var/run/secrets/kubernetes.io/serviceaccount
-    # If we have a ServiceAccount token, use it.
-    if [ -r $SADIR/token ]; then
-      echo "✏️ Creating default .kube/config file."
-      kubectl config set-cluster shpod \
-              --server=https://kubernetes.default.svc \
-              --certificate-authority=/$SADIR/ca.crt
-      kubectl config set-credentials shpod \
-              --token=$(cat $SADIR/token )
-      kubectl config set-context shpod \
-              --cluster=shpod \
-              --user=shpod
-      kubectl config use-context shpod
+  # We need to access the Kubernetes API, so we'll do it
+  # using the well-known endpoint.
+  (
+    export KUBERNETES_SERVICE_HOST=kubernetes.default.svc
+    export KUBERNETES_SERVICE_PORT=443
+    if kubectl get configmap kubeconfig >&/dev/null; then
+      echo "✏️ Downloading ConfigMap kubeconfig to .kube/config."
+      kubectl get configmap kubeconfig -o json |
+        jq -r '.data | to_entries | .[0].value' > ~/.kube/config
+    else
+      SADIR=/var/run/secrets/kubernetes.io/serviceaccount
+      # If we have a ServiceAccount token, use it.
+      if [ -r $SADIR/token ]; then
+        echo "✏️ Generating .kube/config using ServiceAccount token."
+        kubectl config set-cluster shpod \
+                --server=https://kubernetes.default.svc \
+                --certificate-authority=/$SADIR/ca.crt
+        kubectl config set-credentials shpod \
+                --token=$(cat $SADIR/token )
+        kubectl config set-context shpod \
+                --cluster=shpod \
+                --user=shpod
+        kubectl config use-context shpod
+      fi
     fi
-  fi
+  )
 fi
 # Note that we could also just set the following variables:
 #export KUBERNETES_SERVICE_HOST=kubernetes.default.svc
