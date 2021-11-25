@@ -28,7 +28,7 @@ RUN helper-curl tar "--strip-components=1 linux-@GOARCH/helm" \
 # (The source is small enough, so I don't know if cross-compilation
 # would be worth the effort.)
 FROM alpine AS httping
-RUN apk add build-base fftw-dev gettext git musl-libintl ncurses-dev
+RUN apk add build-base gettext git musl-libintl ncurses-dev
 RUN git clone https://salsa.debian.org/debian/httping
 WORKDIR httping
 RUN sed -i s/60/0/ utils.c
