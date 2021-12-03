@@ -64,7 +64,7 @@ RUN cp $(find bin -name kube-linter) /usr/local/bin
 
 # https://github.com/bitnami-labs/sealed-secrets/releases
 FROM builder AS kubeseal
-ARG KUBESEAL_VERSION=0.17.0
+ARG KUBESEAL_VERSION=0.16.0
 RUN helper-curl bin kubeseal \
     https://github.com/bitnami-labs/sealed-secrets/releases/download/v$KUBESEAL_VERSION/kubeseal-@KSARCH
 
@@ -125,6 +125,7 @@ COPY --from=crane       /usr/local/bin/crane          /usr/local/bin
 COPY --from=helm        /usr/local/bin/helm           /usr/local/bin
 COPY --from=httping     /usr/local/bin/httping        /usr/local/bin
 COPY --from=jid         /usr/local/bin/jid            /usr/local/bin
+COPY --from=k9s         /usr/local/bin/k9s            /usr/local/bin
 COPY --from=kubectl     /usr/local/bin/kubectl        /usr/local/bin
 COPY --from=kube-linter /usr/local/bin/kube-linter    /usr/local/bin
 COPY --from=kubeseal    /usr/local/bin/kubeseal       /usr/local/bin
@@ -199,6 +200,7 @@ RUN ( \
     echo "Helm $(helm version --short)" ;\
     httping --version ;\
     jid --version ;\
+    echo "k9s $(k9s version | grep Version)" ;\
     echo "kubectl $(kubectl version --short --client)" ;\
     echo "kube-linter $(kube-linter version)" ;\
     kubeseal --version ;\
