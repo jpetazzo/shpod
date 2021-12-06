@@ -116,9 +116,9 @@ ARG TILT_VERSION=0.23.0
 RUN helper-curl tar tilt \
     https://github.com/tilt-dev/tilt/releases/download/v${TILT_VERSION}/tilt.${TILT_VERSION}.linux.@WTFARCH.tar.gz
 
-FROM alpine
+FROM alpine AS shpod
 ENV COMPLETIONS=/usr/share/bash-completion/completions
-RUN apk add apache2-utils bash bash-completion curl docker-cli file git jq libintl ncurses openssh openssl sudo tmux tree vim yq
+RUN apk add apache2-utils bash bash-completion curl docker-cli file git iputils jq libintl ncurses openssh openssl sudo tmux tree vim yq
 
 COPY --from=compose     /usr/local/bin/docker-compose /usr/local/bin
 COPY --from=crane       /usr/local/bin/crane          /usr/local/bin
