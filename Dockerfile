@@ -170,7 +170,8 @@ RUN echo k8s:x:1000: >> /etc/group \
  && echo k8s:x:1000:1000::/home/k8s:/bin/bash >> /etc/passwd \
  && echo "k8s ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/k8s \
  && mkdir /home/k8s \
- && chown -R k8s:k8s /home/k8s/
+ && chown -R k8s:k8s /home/k8s/ \
+ && sed -i 's/#MaxAuthTries 6/MaxAuthTries 42/' /etc/ssh/sshd_config
 ARG TARGETARCH
 RUN mkdir /tmp/krew \
  && cd /tmp/krew \
