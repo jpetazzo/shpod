@@ -99,7 +99,7 @@ RUN echo krew; case ${TARGETPLATFORM} in \
     esac \
     && mkdir /tmp/krew \
     && cd /tmp/krew \
-    && curl -sSL https://github.com/kubernetes-sigs/krew/releases/latest/download/krew.tar.gz \
+    && curl -sSL https://github.com/kubernetes-sigs/krew/releases/latest/download/krew-linux_${ARCH}.tar.gz \
     | tar -zxf- \
     && ./krew-linux_${ARCH} install krew \
     && cd \
