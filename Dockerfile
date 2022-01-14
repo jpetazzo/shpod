@@ -1,188 +1,232 @@
-FROM golang:alpine AS jid
-RUN apk add git --no-cache
-# build jid for later
-RUN go get -u github.com/simeji/jid/cmd/jid
+FROM --platform=$BUILDPLATFORM golang:alpine AS builder
+RUN apk add curl git
+ARG BUILDARCH TARGETARCH
+ENV BUILDARCH=$BUILDARCH \
+    CGO_ENABLED=0 \
+    GOARCH=$TARGETARCH \
+    TARGETARCH=$TARGETARCH
+COPY helper-* /bin/
 
-# main image with all the tools
-FROM alpine
-ARG TARGETPLATFORM
-ARG BUILDPLATFORM
-RUN echo "I am running on $BUILDPLATFORM, building for $TARGETPLATFORM" > /log
+# https://github.com/docker/compose/releases
+FROM builder AS compose
+ARG COMPOSE_VERSION=2.1.1
+RUN helper-curl bin docker-compose \
+    https://github.com/docker/compose/releases/download/v${COMPOSE_VERSION}/docker-compose-linux-@UARCH
 
-ENV COMPOSE_VERSION=v2.0.0-beta.6 \
-    # https://github.com/docker/compose-cli/releases
-    HELM_VERSION=3.6.2 \
-    # https://github.com/helm/helm/releases
-    KUBECTL_VERSION=1.21.2 \
-    # https://dl.k8s.io/release/stable.txt
-    KUBECTX_VERSION=0.9.3 \
-    # https://github.com/ahmetb/kubectx/releases
-    STERN_VERSION=1.19.0 \
-    # https://github.com/stern/stern/releases
-    COMPLETIONS=/usr/share/bash-completion/completions
-    
-RUN apk add --no-cache bash bash-completion curl git jq libintl ncurses openssl tmux vim apache2-utils
+# https://github.com/google/go-containerregistry/tree/main/cmd/crane
+FROM builder AS crane
+RUN go install github.com/google/go-containerregistry/cmd/crane@latest
+RUN cp $(find bin -name crane) /usr/local/bin
 
-# docker-compose
-RUN echo compose; case ${TARGETPLATFORM} in \
-         "linux/amd64")  ARCH=amd64  ;; \
-         "linux/arm64")  ARCH=arm64  ;; \
-         "linux/arm/v7") ARCH=armv7  ;; \
-    esac \
-    && mkdir -p /root/.docker/cli-plugins \
-    && curl -sSLo /root/.docker/cli-plugins/docker-compose https://github.com/docker/compose-cli/releases/download/${COMPOSE_VERSION}/docker-compose-linux-${ARCH} \
-    && chmod +x /root/.docker/cli-plugins/docker-compose
+# https://github.com/helm/helm/releases
+FROM builder AS helm
+ARG HELM_VERSION=3.7.1
+RUN helper-curl tar "--strip-components=1 linux-@GOARCH/helm" \
+    https://get.helm.sh/helm-v${HELM_VERSION}-linux-@GOARCH.tar.gz
 
-# provide a note about the new compose cli if they try the old command
-COPY docker-compose /usr/local/bin/
+# Use emulation instead of cross-compilation for that one.
+# (The source is small enough, so I don't know if cross-compilation
+# would be worth the effort.)
+FROM alpine AS httping
+RUN apk add build-base gettext git musl-libintl ncurses-dev
+RUN git clone https://salsa.debian.org/debian/httping
+WORKDIR httping
+RUN sed -i s/60/0/ utils.c
+RUN make install BINDIR=/usr/local/bin
 
-# docker cli
-COPY --from=docker /usr/local/bin/docker /usr/local/bin/docker
+# https://github.com/simeji/jid/releases
+FROM builder AS jid
+ARG JID_VERSION=0.7.6
+RUN go install github.com/simeji/jid/cmd/jid@v$JID_VERSION
+RUN cp $(find bin -name jid) /usr/local/bin
 
-# kubectl https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/
-RUN echo kubectl; \
-    case ${TARGETPLATFORM} in \
-         "linux/amd64")  ARCH=amd64  ;; \
-         "linux/arm64")  ARCH=arm64  ;; \
-         "linux/arm/v7") ARCH=arm  ;; \
-    esac \
-    && curl -sSLo /usr/local/bin/kubectl https://dl.k8s.io/release/v${KUBECTL_VERSION}/bin/linux/${ARCH}/kubectl \
-    && chmod +x /usr/local/bin/kubectl
-RUN kubectl completion bash > $COMPLETIONS/kubectl.bash
-RUN kubectl config set-context kubernetes --namespace=default \
-    && kubectl config use-context kubernetes
+# https://github.com/derailed/k9s/releases
+FROM builder AS k9s
+RUN helper-curl tar k9s \
+    https://github.com/derailed/k9s/releases/latest/download/k9s_Linux_@WTFARCH.tar.gz
 
-# stern https://github.com/stern/stern
-RUN echo stern; case ${TARGETPLATFORM} in \
-         "linux/amd64")  ARCH=amd64  ;; \
-         "linux/arm64")  ARCH=arm64  ;; \
-         "linux/arm/v7") ARCH=arm  ;; \
-    esac \
-    && curl -sSL https://github.com/stern/stern/releases/download/v${STERN_VERSION}/stern_${STERN_VERSION}_linux_${ARCH}.tar.gz \
-    | tar -zxo -C /usr/local/bin/ --strip-components=1 stern_${STERN_VERSION}_linux_${ARCH}/stern
-RUN stern --completion bash > $COMPLETIONS/stern.bash
+# https://github.com/kubernetes/kompose/releases
+FROM builder AS kompose
+RUN helper-curl bin kompose \
+    https://github.com/kubernetes/kompose/releases/latest/download/kompose-linux-@GOARCH
 
-# helm https://github.com/helm/helm
-RUN echo helm; case ${TARGETPLATFORM} in \
-         "linux/amd64")  ARCH=amd64  ;; \
-         "linux/arm64")  ARCH=arm64  ;; \
-         "linux/arm/v7") ARCH=arm  ;; \
-    esac \
-    && curl -sSL https://get.helm.sh/helm-v${HELM_VERSION}-linux-${ARCH}.tar.gz \
-    | tar zxo -C /usr/local/bin --strip-components=1 linux-${ARCH}/helm
-RUN helm completion bash > $COMPLETIONS/helm.bash
+# https://github.com/kubernetes/kubernetes/releases
+FROM builder AS kubectl
+ARG KUBECTL_VERSION=1.22.3
+RUN helper-curl bin kubectl \
+    https://storage.googleapis.com/kubernetes-release/release/v${KUBECTL_VERSION}/bin/linux/@GOARCH/kubectl 
 
-# httping https://github.com/BretFisher/httping-docker
-COPY --from=bretfisher/httping /usr/local/bin/httping /usr/local/bin/httping
+# https://github.com/stackrox/kube-linter/releases
+FROM builder AS kube-linter
+ARG KUBELINTER_VERSION=0.2.5
+RUN go install golang.stackrox.io/kube-linter/cmd/kube-linter@$KUBELINTER_VERSION
+RUN cp $(find bin -name kube-linter) /usr/local/bin
 
-# kubectx and kubens https://github.com/ahmetb/kubectx
-RUN echo kubectx; case ${TARGETPLATFORM} in \
-         "linux/amd64")  ARCH=x86_64  ;; \
-         "linux/arm64")  ARCH=arm64  ;; \
-         "linux/arm/v7") ARCH=armhf  ;; \
-    esac \
-    && curl -sSL https://github.com/ahmetb/kubectx/releases/download/v${KUBECTX_VERSION}/kubectx_v${KUBECTX_VERSION}_linux_${ARCH}.tar.gz \
-    | tar -zxo -C /usr/local/bin/ kubectx \
-    && curl -sSL https://github.com/ahmetb/kubectx/releases/download/v${KUBECTX_VERSION}/kubens_v${KUBECTX_VERSION}_linux_${ARCH}.tar.gz \
-    | tar -zxo -C /usr/local/bin/ kubens \
-    && curl -sSLo ${COMPLETIONS}/kubectx.bash https://github.com/ahmetb/kubectx/releases/download/v${KUBECTX_VERSION}/kubectx \
-    && curl -sSLo ${COMPLETIONS}/kubens.bash https://github.com/ahmetb/kubectx/releases/download/v${KUBECTX_VERSION}/kubens
+# https://github.com/bitnami-labs/sealed-secrets/releases
+FROM builder AS kubeseal
+ARG KUBESEAL_VERSION=0.16.0
+RUN helper-curl bin kubeseal \
+    https://github.com/bitnami-labs/sealed-secrets/releases/download/v$KUBESEAL_VERSION/kubeseal-@KSARCH
 
-# kube-ps1 https://github.com/jonmosco/kube-ps1
-RUN echo kube-ps1; curl -sSLo /etc/profile.d/kube-ps1.sh https://raw.githubusercontent.com/jonmosco/kube-ps1/master/kube-ps1.sh
+# https://github.com/kubernetes-sigs/kustomize/releases
+FROM builder AS kustomize
+ARG KUSTOMIZE_VERSION=4.4.1
+RUN helper-curl tar kustomize \
+    https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v$KUSTOMIZE_VERSION/kustomize_v${KUSTOMIZE_VERSION}_linux_@GOARCH.tar.gz
 
-# krew https://github.com/kubernetes-sigs/krew
-RUN echo krew; case ${TARGETPLATFORM} in \
-         "linux/amd64")  ARCH=amd64  ;; \
-         "linux/arm64")  ARCH=arm64  ;; \
-         "linux/arm/v7") ARCH=arm  ;; \
-    esac \
-    && mkdir /tmp/krew \
-    && cd /tmp/krew \
-    && curl -sSL https://github.com/kubernetes-sigs/krew/releases/latest/download/krew-linux_${ARCH}.tar.gz \
-    | tar -zxf- \
-    && ./krew-linux_${ARCH} install krew \
-    && cd \
-    && rm -rf /tmp/krew \
-    && echo export 'PATH=$HOME/.krew/bin:$PATH' >> .bashrc
+# https://ngrok.com/download
+FROM builder AS ngrok
+RUN helper-curl tar ngrok \
+    https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-@GOARCH.tgz
 
-# TODO: add ship (no arm support). 
-# It's superseded by Kots:
-# TODO: add https://github.com/replicatedhq/kots
+# https://github.com/derailed/popeye/releases
+FROM builder AS popeye
+RUN helper-curl tar popeye \
+    https://github.com/derailed/popeye/releases/latest/download/popeye_Linux_@WTFARCH.tar.gz
 
-# k9s https://github.com/derailed/k9s
-RUN echo k9s; case ${TARGETPLATFORM} in \
-         "linux/amd64")  ARCH=x86_64  ;; \
-         "linux/arm64")  ARCH=arm64  ;; \
-         "linux/arm/v7") ARCH=arm  ;; \
-    esac \
-    && curl -sSL https://github.com/derailed/k9s/releases/latest/download/k9s_Linux_${ARCH}.tar.gz \
-    | tar -zxo -C /usr/local/bin/ k9s
+# https://github.com/regclient/regclient/releases
+FROM builder AS regctl
+ARG REGCLIENT_VERSION=0.3.9
+RUN helper-curl bin regctl \
+    https://github.com/regclient/regclient/releases/download/v$REGCLIENT_VERSION/regctl-linux-@GOARCH
 
-# popeye https://github.com/derailed/popeye 
-RUN echo popeye; case ${TARGETPLATFORM} in \
-         "linux/amd64")  ARCH=x86_64  ;; \
-         "linux/arm64")  ARCH=arm64  ;; \
-         "linux/arm/v7") ARCH=arm  ;; \
-    esac \
-    && curl -sSL https://github.com/derailed/popeye/releases/latest/download/popeye_Linux_${ARCH}.tar.gz \
-    | tar -zxo -C /usr/local/bin popeye
+# This tool is still used in the kustomize section, but we will probably
+# deprecate it eventually as we only use a tiny feature that doesn't seem
+# to be available anymore in more recent versions (or requires some work
+# to adapt). Also, it's not available on all platforms and doesn't compile.
+FROM builder AS ship
+ARG SHIP_VERSION=0.51.3
+RUN helper-curl tar ship \
+    https://github.com/replicatedhq/ship/releases/download/v${SHIP_VERSION}/ship_${SHIP_VERSION}_linux_@GOARCH.tar.gz
 
-# tilt https://github.com/tilt-dev/tilt
-RUN echo tilt; case ${TARGETPLATFORM} in \
-         "linux/amd64")  ARCH=x86_64  ;; \
-         "linux/arm64")  ARCH=arm64_ALPHA  ;; \
-         "linux/arm/v7") ARCH=arm_ALPHA  ;; \
-    esac \
-    && curl -sSL https://github.com/tilt-dev/tilt/releases/download/v0.19.0/tilt.0.19.0.linux.${ARCH}.tar.gz \
-    | tar -zxo -C /usr/local/bin tilt
+# https://github.com/GoogleContainerTools/skaffold/releases/tag/v1.34.0
+FROM builder AS skaffold
+RUN helper-curl bin skaffold \
+    https://storage.googleapis.com/skaffold/releases/latest/skaffold-linux-@GOARCH
 
-# skaffold https://skaffold.dev 
-# FIXME: wait for arm/v7 support and update
-        #  "linux/arm/v7") ARCH=arm  ;; \
-        # https://github.com/GoogleContainerTools/skaffold/issues/5610
-RUN echo skaffold; case ${TARGETPLATFORM} in \
-         "linux/amd64")  ARCH=amd64  ;; \
-         "linux/arm64")  ARCH=arm64  ;; \
-    esac \ 
-    && if test "${ARCH}" != "arm" ; \
-    then \
-      curl -sSLo /usr/local/bin/skaffold https://storage.googleapis.com/skaffold/releases/latest/skaffold-linux-${ARCH} \
-      && chmod +x /usr/local/bin/skaffold ; \
-    fi
+# https://github.com/stern/stern/releases
+FROM builder AS stern
+ARG STERN_VERSION=1.20.1
+RUN helper-curl tar "--strip-components=1 stern_${STERN_VERSION}_linux_@GOARCH/stern" \
+    https://github.com/stern/stern/releases/download/v${STERN_VERSION}/stern_${STERN_VERSION}_linux_@GOARCH.tar.gz
 
-# kompose https://github.com/kubernetes/kompose
-RUN echo kompose; case ${TARGETPLATFORM} in \
-         "linux/amd64")  ARCH=amd64  ;; \
-         "linux/arm64")  ARCH=arm64  ;; \
-         "linux/arm/v7") ARCH=arm  ;; \
-    esac \
-    && curl -sSLo /usr/local/bin/kompose https://github.com/kubernetes/kompose/releases/latest/download/kompose-linux-${ARCH} \
-    && chmod +x /usr/local/bin/kompose
+# https://github.com/tilt-dev/tilt/releases/
+FROM builder AS tilt
+ARG TILT_VERSION=0.23.0
+RUN helper-curl tar tilt \
+    https://github.com/tilt-dev/tilt/releases/download/v${TILT_VERSION}/tilt.${TILT_VERSION}.linux.@WTFARCH.tar.gz
 
-#kubeseal https://github.com/bitnami-labs/sealed-secrets
-RUN echo kubeseal; case ${TARGETPLATFORM} in \
-         "linux/amd64")  ARCH=linux-amd64  ;; \
-         "linux/arm64")  ARCH=arm64  ;; \
-         "linux/arm/v7") ARCH=arm  ;; \
-    esac \ 
-    && curl -sSLo /usr/local/bin/kubeseal https://github.com/bitnami-labs/sealed-secrets/releases/download/latest/kubeseal-${ARCH} \
-    && chmod +x /usr/local/bin/kubeseal
+FROM alpine AS shpod
+ENV COMPLETIONS=/usr/share/bash-completion/completions
+RUN apk add apache2-utils bash bash-completion curl docker-cli file git iputils jq libintl ncurses openssh openssl sudo tmux tree vim yq
 
-# jid https://github.com/simeji/jid
-COPY --from=jid /go/bin/jid /usr/local/bin/jid
+COPY --from=compose     /usr/local/bin/docker-compose /usr/local/bin
+COPY --from=crane       /usr/local/bin/crane          /usr/local/bin
+COPY --from=helm        /usr/local/bin/helm           /usr/local/bin
+COPY --from=httping     /usr/local/bin/httping        /usr/local/bin
+COPY --from=jid         /usr/local/bin/jid            /usr/local/bin
+COPY --from=k9s         /usr/local/bin/k9s            /usr/local/bin
+COPY --from=kubectl     /usr/local/bin/kubectl        /usr/local/bin
+COPY --from=kube-linter /usr/local/bin/kube-linter    /usr/local/bin
+COPY --from=kubeseal    /usr/local/bin/kubeseal       /usr/local/bin
+COPY --from=kustomize   /usr/local/bin/kustomize      /usr/local/bin
+COPY --from=ngrok       /usr/local/bin/ngrok          /usr/local/bin
+COPY --from=popeye      /usr/local/bin/popeye         /usr/local/bin
+COPY --from=regctl      /usr/local/bin/regctl         /usr/local/bin
+COPY --from=ship        /usr/local/bin/ship           /usr/local/bin
+COPY --from=skaffold    /usr/local/bin/skaffold       /usr/local/bin
+COPY --from=stern       /usr/local/bin/stern          /usr/local/bin
+COPY --from=tilt        /usr/local/bin/tilt           /usr/local/bin
 
-# final shell environment prep
-WORKDIR /root
-RUN echo trap exit TERM > /etc/profile.d/trapterm.sh
-RUN sed -i "s/export PS1=/#export PS1=/" /etc/profile
-RUN sed -i s,/bin/ash,/bin/bash, /etc/passwd
-ENV HOSTIP="0.0.0.0" \
-    TERM="xterm-256color" \
-    KUBE_PS1_PREFIX="" \
-    KUBE_PS1_SUFFIX="" \
-    KUBE_PS1_SYMBOL_ENABLE="false" \
-    KUBE_PS1_CTX_COLOR="green" \
-    KUBE_PS1_NS_COLOR="green"
-ENV PS1="\e[1m\e[31m[\$HOSTIP] \e[32m(\$(kube_ps1)) \e[34m\u@\h\e[35m \w\e[0m\n$ "
-CMD ["bash", "-l"]
+RUN set -e ; for BIN in \
+    crane \
+    helm \
+    kubectl \
+    kube-linter \
+    kustomize \
+    regctl \
+    skaffold \
+    tilt \
+    ; do echo $BIN ; $BIN completion bash > $COMPLETIONS/$BIN.bash ; done ;\
+    yq shell-completion bash > $COMPLETIONS/yq.bash
+
+RUN cd /tmp \
+ && git clone https://github.com/ahmetb/kubectx \
+ && cd kubectx \
+ && mv kubectx /usr/local/bin/kctx \
+ && mv kubens /usr/local/bin/kns \
+ && mv completion/kubectx.bash $COMPLETIONS/kctx.bash \
+ && mv completion/kubens.bash $COMPLETIONS/kns.bash \
+ && cd .. \
+ && rm -rf kubectx
+RUN cd /tmp \
+ && git clone https://github.com/jonmosco/kube-ps1 \
+ && cp kube-ps1/kube-ps1.sh /etc/profile.d/ \
+ && rm -rf kube-ps1
+
+# Create user and finalize setup.
+
+RUN echo k8s:x:1000: >> /etc/group \
+ && echo k8s:x:1000:1000::/home/k8s:/bin/bash >> /etc/passwd \
+ && echo "k8s ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/k8s \
+ && mkdir /home/k8s \
+ && chown -R k8s:k8s /home/k8s/ \
+ && sed -i 's/#MaxAuthTries 6/MaxAuthTries 42/' /etc/ssh/sshd_config
+ARG TARGETARCH
+RUN mkdir /tmp/krew \
+ && cd /tmp/krew \
+ && curl -fsSL https://github.com/kubernetes-sigs/krew/releases/latest/download/krew-linux_$TARGETARCH.tar.gz | tar -zxf- \
+ && sudo -u k8s -H ./krew-linux_$TARGETARCH install krew \
+ && cd \
+ && rm -rf /tmp/krew
+COPY --chown=1000:1000 bash_profile /home/k8s/.bash_profile
+COPY --chown=1000:1000 vimrc /home/k8s/.vimrc
+COPY motd /etc/motd
+COPY setup-tailhist.sh /usr/local/bin
+
+# Generate a list of all installed versions.
+RUN ( \
+    ab -V | head -n1 ;\
+    bash --version | head -n1 ;\
+    curl --version | head -n1 ;\
+    docker version --format="Docker {{.Client.Version}}" ;\
+    git --version ;\
+    jq --version ;\
+    ssh -V ;\
+    tmux -V ;\
+    yq --version ;\
+    docker-compose version ;\
+    echo "crane $(crane version)" ;\
+    echo "Helm $(helm version --short)" ;\
+    httping --version ;\
+    jid --version ;\
+    echo "k9s $(k9s version | grep Version)" ;\
+    echo "kubectl $(kubectl version --short --client)" ;\
+    echo "kube-linter $(kube-linter version)" ;\
+    kubeseal --version ;\
+    kustomize version --short ;\
+    ngrok version ;\
+    echo "popeye $(popeye version | grep Version)" ;\
+    echo "regctl $(regctl version --format={{.VCSTag}})" ;\
+    echo "ship $(ship version | jq .version)" ;\
+    echo "skaffold $(skaffold version)" ;\
+    echo "stern $(stern --version | grep ^version)" ;\
+    echo "tilt $(tilt version)" ;\
+    ) > versions.txt
+
+# If there is a tty, give us a shell.
+# (This happens e.g. when we do "docker run -ti bretfisher/shpod".)
+# Otherwise, start an SSH server.
+# (This happens e.g. when we use that image in a Pod in a Deployment.)
+CMD \
+  if tty >/dev/null; then \
+    exec login -f k8s && \
+    : ; \
+  else \
+    ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key -N "" && \
+    echo k8s:${PASSWORD-k8s} | chpasswd && \
+    exec /usr/sbin/sshd -D -e && \
+    : ; \
+  fi
+
+EXPOSE 22/tcp
