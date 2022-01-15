@@ -1,12 +1,12 @@
 #!/bin/sh
 # For more information about shpod, check it out on GitHub:
-# https://github.com/bretfisher/shpod
+# https://github.com/jpetazzo/shpod
 if [ -f shpod.yaml ]; then
   YAML=shpod.yaml
 else
-  YAML=https://k8smastery.com/shpod.yaml
-fi
-if [ "$(kubectl get pod --namespace=shpod shpod --ignore-not-found -o jsonpath='{.status.phase}')" = "Running" ]; then
+  YAML=https://raw.githubusercontent.com/jpetazzo/shpod/main/shpod.yaml
+ fi
+ if [ "$(kubectl get pod --namespace=shpod shpod --ignore-not-found -o jsonpath={.status.phase})" = "Running" ]; then
   echo "Shpod is already running. Starting a new shell with 'kubectl exec'."
   echo "(Note: if the main invocation of shpod exits, all others will be terminated.)"
   kubectl exec -ti --namespace=shpod shpod -- bash -l

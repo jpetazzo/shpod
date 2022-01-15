@@ -1,3 +1,0 @@
-#! /bin/bash
-
-echo 'Docker Compose is now in the Docker CLI, try "docker compose"'

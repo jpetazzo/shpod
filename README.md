@@ -1,22 +1,6 @@
 # shpod
 
-[![GitHub Super-Linter](https://github.com/bretfisher/shpod/workflows/Lint%20Code%20Base/badge.svg)](https://github.com/BretFisher/shpod/actions/workflows/linter.yml)
-[![Build and Push Image](https://github.com/bretfisher/shpod/actions/workflows/docker-build-and-push.yml/badge.svg?branch=main)](https://github.com/BretFisher/shpod/actions/workflows/docker-build-and-push.yml)
-
-**TL,DR:** `curl https://k8smastery.com/shpod.sh | sh`
-
-If you are looking for an image that works on the ARM architecture
-(like the Raspberry Pi or the Apple M1), have a look at
-[BretFisher/shpod](https://github.com/BretFisher/shpod) instead.
-Bret's fork is also a state-of-the-art example of a multi-arch
-Dockerfile!
-
-If you are looking for an image that works on the ARM architecture
-(like the Raspberry Pi or the Apple M1), have a look at
-[BretFisher/shpod](https://github.com/BretFisher/shpod) instead.
-Bret's fork is also a state-of-the-art example of a multi-arch
-Dockerfile!
-
+**TL,DR:** `curl https://shpod.sh | sh`
 
 ## What's this?
 
@@ -57,7 +41,7 @@ It includes:
 It also includes completion for most of these tools.
 
 Its goal is to provide a normalized environment, to go
-with the training materials at [kubernetesmastery.com](https://kubernetesmastery.com),
+with the training materials at [https://container.training](https://container.training),
 so that you can get all the tools you need regardless
 of your exact Kubernetes setup.
 
@@ -69,10 +53,10 @@ can attach to that shell. If it runs without a pseudo-terminal,
 it will start an SSH server, and you can connect to that SSH
 server to obtain the shell.
 
-
 ## Using with a pseudo-terminal
 
 Run it in a Pod and attach directly to it:
+
 ```bash
 kubectl run shpod --restart=Never --rm -it --image=jpetazzo/shpod
 ```
@@ -82,11 +66,11 @@ Most Kubernetes commands won't work (you will get permission errors)
 until you create an appropriate RoleBinding or ClusterRoleBinding
 (see below for details).
 
-
 ## Using without a pseudo-terminal
 
 Run as a Pod (or Deployment), then expose (or port-forward) to port
 22 in that Pod, and connect with an SSH client:
+
 ```bash
 kubectl run shpod --image=jpetazzo/shpod
 kubectl wait pod shpod --for=condition=ready
@@ -96,7 +80,6 @@ ssh -l k8s -p 2222 localhost # the default password is "k8s"
 
 Note: you can change the password by setting the `PASSWORD`
 environment variable.
-
 
 ## Granting permissions
 
@@ -126,7 +109,6 @@ kubectl create clusterrolebinding shpod \
 
 You can also use the one-liner below.
 
-
 ## One-liner usage
 
 The [shpod.sh](shpod.sh) script will:
@@ -148,21 +130,29 @@ The manifest will:
 To execute it:
 
 ```bash
-curl https://k8smastery.com/shpod.sh | sh
-```
+curl https://raw.githubusercontent.com/jpetazzo/shpod/main/shpod.sh | sh
+ ```
+
+ It's also available with short URLs:
+
+ ```bash
+ curl https://shpod.sh | sh
+ curl https://shpod.me | sh
+ ```
 
 If you don't like `curl|sh`, and/or if you want to execute things
 step by step, check the next section.
 
-
 ## Step-by-step usage
 
 1. Deploy the shpod pod:
+
    ```bash
-   kubectl apply -f https://k8smastery.com/shpod.yaml
+    kubectl apply -f https://raw.githubusercontent.com/jpetazzo/shpod/main/shpod.yaml
    ```
 
 2. Attach to the shpod pod:
+
    ```bash
    kubectl attach --namespace=shpod -ti shpod
    ```
@@ -182,14 +172,12 @@ and the ClusterRoleBinding with the same name:
 kubectl delete clusterrolebinding,ns shpod
 ```
 
-
 ## Opening multiple sessions
 
 Shpod tries to detect if it is already running; and if it's the case,
 it will try to start another process using `kubectl exec`. Note that
 if the first shpod process exits, Kubernetes will terminate all the
 other processes.
-
 
 ## Special handling of kubeconfig
 
@@ -198,7 +186,6 @@ where shpod is running, it will extract the first file from
 that ConfigMap and use it to populate `~/.kube/config`.
 
 This lets you inject a custom kubeconfig file into shpod.
-
 
 ## Support for other architectures
 
