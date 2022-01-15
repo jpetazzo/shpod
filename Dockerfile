@@ -1,4 +1,6 @@
+# hadolint ignore=DL3029
 FROM --platform=$BUILDPLATFORM golang:alpine AS builder
+# hadolint ignore=DL3018
 RUN apk add curl git
 ARG BUILDARCH TARGETARCH
 # hadolint ignore=DL3044
@@ -28,7 +30,9 @@ RUN helper-curl tar "--strip-components=1 linux-@GOARCH/helm" \
 # Use emulation instead of cross-compilation for that one.
 # (The source is small enough, so I don't know if cross-compilation
 # would be worth the effort.)
+# hadolint ignore=DL3006
 FROM alpine AS httping
+# hadolint ignore=DL3018
 RUN apk add build-base gettext git musl-libintl ncurses-dev
 RUN git clone https://salsa.debian.org/debian/httping
 WORKDIR /httping
@@ -117,8 +121,10 @@ ARG TILT_VERSION=0.23.0
 RUN helper-curl tar tilt \
     https://github.com/tilt-dev/tilt/releases/download/v${TILT_VERSION}/tilt.${TILT_VERSION}.linux.@WTFARCH.tar.gz
 
+# hadolint ignore=DL3006
 FROM alpine AS shpod
 ENV COMPLETIONS=/usr/share/bash-completion/completions
+# hadolint ignore=DL3018
 RUN apk add apache2-utils bash bash-completion curl docker-cli file git iputils jq libintl ncurses openssh openssl sudo tmux tree vim yq
 
 COPY --from=compose     /usr/local/bin/docker-compose /usr/local/bin
@@ -151,6 +157,7 @@ RUN set -e ; for BIN in \
     ; do echo $BIN ; $BIN completion bash > $COMPLETIONS/$BIN.bash ; done ;\
     yq shell-completion bash > $COMPLETIONS/yq.bash
 
+# hadolint ignore=DL3003
 RUN cd /tmp \
  && git clone https://github.com/ahmetb/kubectx \
  && cd kubectx \
@@ -160,13 +167,13 @@ RUN cd /tmp \
  && mv completion/kubens.bash $COMPLETIONS/kns.bash \
  && cd .. \
  && rm -rf kubectx
+# hadolint ignore=DL3003
 RUN cd /tmp \
  && git clone https://github.com/jonmosco/kube-ps1 \
  && cp kube-ps1/kube-ps1.sh /etc/profile.d/ \
  && rm -rf kube-ps1
 
 # Create user and finalize setup.
-# hadolint ignore=DL3004
 RUN echo k8s:x:1000: >> /etc/group \
  && echo k8s:x:1000:1000::/home/k8s:/bin/bash >> /etc/passwd \
  && echo "k8s ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/k8s \
@@ -174,6 +181,8 @@ RUN echo k8s:x:1000: >> /etc/group \
  && chown -R k8s:k8s /home/k8s/ \
  && sed -i 's/#MaxAuthTries 6/MaxAuthTries 42/' /etc/ssh/sshd_config
 ARG TARGETARCH
+SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
+# hadolint ignore=DL3003,DL3004
 RUN mkdir /tmp/krew \
  && cd /tmp/krew \
  && curl -fsSL https://github.com/kubernetes-sigs/krew/releases/latest/download/krew-linux_$TARGETARCH.tar.gz | tar -zxf- \
@@ -191,7 +200,7 @@ RUN ( \
     ab -V | head -n1 ;\
     bash --version | head -n1 ;\
     curl --version | head -n1 ;\
-    docker version --format="Docker {{.Client.Version}}" ;\
+    docker version --format="Docker '{{.Client.Version}}'" ;\
     git --version ;\
     jq --version ;\
     ssh -V ;\
@@ -209,7 +218,7 @@ RUN ( \
     kustomize version --short ;\
     ngrok version ;\
     echo "popeye $(popeye version | grep Version)" ;\
-    echo "regctl $(regctl version --format={{.VCSTag}})" ;\
+    echo "regctl $(regctl version --format='{{.VCSTag}}')" ;\
     echo "ship $(ship version | jq .version)" ;\
     echo "skaffold $(skaffold version)" ;\
     echo "stern $(stern --version | grep ^version)" ;\
@@ -220,6 +229,7 @@ RUN ( \
 # (This happens e.g. when we do "docker run -ti jpetazzo/shpod".)
 # Otherwise, start an SSH server.
 # (This happens e.g. when we use that image in a Pod in a Deployment.)
+# hadolint ignore=DL3025
 CMD \
   if tty >/dev/null; then \
     exec login -f k8s && \
