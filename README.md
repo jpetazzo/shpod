@@ -11,6 +11,12 @@ If you are looking for an image that works on the ARM architecture
 Bret's fork is also a state-of-the-art example of a multi-arch
 Dockerfile!
 
+If you are looking for an image that works on the ARM architecture
+(like the Raspberry Pi or the Apple M1), have a look at
+[BretFisher/shpod](https://github.com/BretFisher/shpod) instead.
+Bret's fork is also a state-of-the-art example of a multi-arch
+Dockerfile!
+
 
 ## What's this?
 
@@ -68,7 +74,7 @@ server to obtain the shell.
 
 Run it in a Pod and attach directly to it:
 ```bash
-kubectl run shpod --restart=Never --rm -it --image=bretfisher/shpod
+kubectl run shpod --restart=Never --rm -it --image=jpetazzo/shpod
 ```
 
 This should give you a shell in a pod, with all the tools installed.
@@ -82,7 +88,7 @@ until you create an appropriate RoleBinding or ClusterRoleBinding
 Run as a Pod (or Deployment), then expose (or port-forward) to port
 22 in that Pod, and connect with an SSH client:
 ```bash
-kubectl run shpod --image=bretfisher/shpod
+kubectl run shpod --image=jpetazzo/shpod
 kubectl wait pod shpod --for=condition=ready
 kubectl port-forward pod/shpod 2222:22
 ssh -l k8s -p 2222 localhost # the default password is "k8s"
@@ -176,13 +182,6 @@ and the ClusterRoleBinding with the same name:
 kubectl delete clusterrolebinding,ns shpod
 ```
 
-## Internal details
-
-The YAML file is a Kubernetes manifest for a Pod, a ServiceAccount,
-a ClusterRoleBinding, and a Namespace to hold the Pod and ServiceAccount.
-
-The Pod uses image [bretfisher/shpod](https://hub.docker.com/r/bretfisher/shpod)
-on the Docker Hub, built from this repository [github.com/bretfisher/shpod](https://github.com/bretfisher/shpod).
 
 ## Opening multiple sessions
 
@@ -191,7 +190,6 @@ it will try to start another process using `kubectl exec`. Note that
 if the first shpod process exits, Kubernetes will terminate all the
 other processes.
 
-## Thanks to @jpetazzo for this great open source
 
 ## Special handling of kubeconfig
 

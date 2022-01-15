@@ -215,7 +215,7 @@ RUN ( \
     ) > versions.txt
 
 # If there is a tty, give us a shell.
-# (This happens e.g. when we do "docker run -ti bretfisher/shpod".)
+# (This happens e.g. when we do "docker run -ti jpetazzo/shpod".)
 # Otherwise, start an SSH server.
 # (This happens e.g. when we use that image in a Pod in a Deployment.)
 CMD \

@@ -31,8 +31,7 @@ spec:
   serviceAccountName: shpod
   containers:
   - name: shpod
-    image: bretfisher/shpod
-    imagePullPolicy: Always
+    image: jpetazzo/shpod
     stdin: true
     tty: true
     env:
