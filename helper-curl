@@ -57,12 +57,12 @@ fi
 case "$TYPE" in
 bin)
   BIN=$BIN_OR_ARGS
-  curl -fsSL $URL > /usr/local/bin/$BIN
+  curl -fsSL "$URL" > /usr/local/bin/"$BIN"
   chmod +x /usr/local/bin/"$BIN"
   ;;
 tar)
   ARGS=$BIN_OR_ARGS
-  curl -fsSL $URL | tar -zxvf- -C /usr/local/bin "$ARGS"
+  curl -fsSL "$URL" | tar -zxvf- -C /usr/local/bin "$ARGS"
   ;;
 *)
   echo "Unrecognized download type: $TYPE"
