@@ -5,6 +5,7 @@ ignored:
   - DL3018 #apk add pin versions
   - DL3022 #bad rule for COPY --from
   - DL3028 #gem install pin versions
+  - DL3029 #we want --platform flag sometimes
   - DL3059 #multiple consecutive runs
   - DL4006 #we don't need pipefail in this
   - SC2016 #we want single quotes sometimes

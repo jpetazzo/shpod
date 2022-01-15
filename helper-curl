@@ -35,22 +35,22 @@ arm)
 esac
 
 mangle() {
-  echo $1 | sed \
-  -e s/@GOARCH/$GOARCH/g \
-  -e s/@KSARCH/$KSARCH/g \
-  -e s/@UARCH/$UARCH/g \
-  -e s/@WTFARCH/$WTFARCH/g \
+  echo "$1" | sed \
+  -e s/@GOARCH/"$GOARCH"/g \
+  -e s/@KSARCH/"$KSARCH"/g \
+  -e s/@UARCH/"$UARCH"/g \
+  -e s/@WTFARCH/"$WTFARCH"/g \
   #
 }
 
-URL=$(mangle $URL)
+URL=$(mangle "$URL")
 BIN_OR_ARGS=$(mangle "$BIN_OR_ARGS")
 
-if ! curl -fsSLI $URL >/dev/null; then
+if ! curl -fsSLI "$URL" >/dev/null; then
   echo "URL not found: $URL"
   BIN=${BIN_OR_ARGS##*/}
   echo "Installing placeholder: $BIN"
-  cp /bin/helper-unsupported /usr/local/bin/$BIN
+  cp /bin/helper-unsupported /usr/local/bin/"$BIN"
   exit 0
 fi
 
@@ -58,11 +58,11 @@ case "$TYPE" in
 bin)
   BIN=$BIN_OR_ARGS
   curl -fsSL $URL > /usr/local/bin/$BIN
-  chmod +x /usr/local/bin/$BIN
+  chmod +x /usr/local/bin/"$BIN"
   ;;
 tar)
   ARGS=$BIN_OR_ARGS
-  curl -fsSL $URL | tar -zxvf- -C /usr/local/bin $ARGS
+  curl -fsSL $URL | tar -zxvf- -C /usr/local/bin "$ARGS"
   ;;
 *)
   echo "Unrecognized download type: $TYPE"

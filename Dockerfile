@@ -1,6 +1,7 @@
 FROM --platform=$BUILDPLATFORM golang:alpine AS builder
 RUN apk add curl git
 ARG BUILDARCH TARGETARCH
+# hadolint ignore=DL3044
 ENV BUILDARCH=$BUILDARCH \
     CGO_ENABLED=0 \
     GOARCH=$TARGETARCH \
@@ -16,7 +17,7 @@ RUN helper-curl bin docker-compose \
 # https://github.com/google/go-containerregistry/tree/main/cmd/crane
 FROM builder AS crane
 RUN go install github.com/google/go-containerregistry/cmd/crane@latest
-RUN cp $(find bin -name crane) /usr/local/bin
+RUN cp "$(find bin -name crane)" /usr/local/bin
 
 # https://github.com/helm/helm/releases
 FROM builder AS helm
@@ -30,7 +31,7 @@ RUN helper-curl tar "--strip-components=1 linux-@GOARCH/helm" \
 FROM alpine AS httping
 RUN apk add build-base gettext git musl-libintl ncurses-dev
 RUN git clone https://salsa.debian.org/debian/httping
-WORKDIR httping
+WORKDIR /httping
 RUN sed -i s/60/0/ utils.c
 RUN make install BINDIR=/usr/local/bin
 
@@ -38,7 +39,7 @@ RUN make install BINDIR=/usr/local/bin
 FROM builder AS jid
 ARG JID_VERSION=0.7.6
 RUN go install github.com/simeji/jid/cmd/jid@v$JID_VERSION
-RUN cp $(find bin -name jid) /usr/local/bin
+RUN cp "$(find bin -name jid)" /usr/local/bin
 
 # https://github.com/derailed/k9s/releases
 FROM builder AS k9s
@@ -60,7 +61,7 @@ RUN helper-curl bin kubectl \
 FROM builder AS kube-linter
 ARG KUBELINTER_VERSION=0.2.5
 RUN go install golang.stackrox.io/kube-linter/cmd/kube-linter@$KUBELINTER_VERSION
-RUN cp $(find bin -name kube-linter) /usr/local/bin
+RUN cp "$(find bin -name kube-linter)" /usr/local/bin
 
 # https://github.com/bitnami-labs/sealed-secrets/releases
 FROM builder AS kubeseal
@@ -165,7 +166,7 @@ RUN cd /tmp \
  && rm -rf kube-ps1
 
 # Create user and finalize setup.
-
+# hadolint ignore=DL3004
 RUN echo k8s:x:1000: >> /etc/group \
  && echo k8s:x:1000:1000::/home/k8s:/bin/bash >> /etc/passwd \
  && echo "k8s ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/k8s \
@@ -185,6 +186,7 @@ COPY motd /etc/motd
 COPY setup-tailhist.sh /usr/local/bin
 
 # Generate a list of all installed versions.
+# hadolint ignore=DL3025,3001
 RUN ( \
     ab -V | head -n1 ;\
     bash --version | head -n1 ;\
