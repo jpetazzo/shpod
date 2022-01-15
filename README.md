@@ -131,14 +131,14 @@ To execute it:
 
 ```bash
 curl https://raw.githubusercontent.com/jpetazzo/shpod/main/shpod.sh | sh
- ```
+```
 
- It's also available with short URLs:
+It's also available with short URLs:
 
- ```bash
- curl https://shpod.sh | sh
- curl https://shpod.me | sh
- ```
+```bash
+curl https://shpod.sh | sh
+curl https://shpod.me | sh
+```
 
 If you don't like `curl|sh`, and/or if you want to execute things
 step by step, check the next section.
@@ -148,7 +148,7 @@ step by step, check the next section.
 1. Deploy the shpod pod:
 
    ```bash
-    kubectl apply -f https://raw.githubusercontent.com/jpetazzo/shpod/main/shpod.yaml
+   kubectl apply -f https://raw.githubusercontent.com/jpetazzo/shpod/main/shpod.yaml
    ```
 
 2. Attach to the shpod pod:
