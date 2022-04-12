@@ -64,9 +64,9 @@ RUN cp $(find bin -name kube-linter) /usr/local/bin
 
 # https://github.com/bitnami-labs/sealed-secrets/releases
 FROM builder AS kubeseal
-ARG KUBESEAL_VERSION=0.16.0
-RUN helper-curl bin kubeseal \
-    https://github.com/bitnami-labs/sealed-secrets/releases/download/v$KUBESEAL_VERSION/kubeseal-@KSARCH
+ARG KUBESEAL_VERSION=0.17.4
+RUN helper-curl tar kubeseal \
+    https://github.com/bitnami-labs/sealed-secrets/releases/download/v$KUBESEAL_VERSION/kubeseal-$KUBESEAL_VERSION-linux-@GOARCH.tar.gz
 
 # https://github.com/kubernetes-sigs/kustomize/releases
 FROM builder AS kustomize
@@ -173,12 +173,15 @@ RUN echo k8s:x:1000: >> /etc/group \
  && chown -R k8s:k8s /home/k8s/ \
  && sed -i 's/#MaxAuthTries 6/MaxAuthTries 42/' /etc/ssh/sshd_config
 ARG TARGETARCH
-RUN mkdir /tmp/krew \
+RUN \
+ if [ "$TARGETARCH" != "386" ]; then \
+ mkdir /tmp/krew \
  && cd /tmp/krew \
  && curl -fsSL https://github.com/kubernetes-sigs/krew/releases/latest/download/krew-linux_$TARGETARCH.tar.gz | tar -zxf- \
  && sudo -u k8s -H ./krew-linux_$TARGETARCH install krew \
  && cd \
- && rm -rf /tmp/krew
+ && rm -rf /tmp/krew \
+ ; fi
 COPY --chown=1000:1000 bash_profile /home/k8s/.bash_profile
 COPY --chown=1000:1000 vimrc /home/k8s/.vimrc
 COPY motd /etc/motd
