@@ -118,7 +118,7 @@ RUN helper-curl tar tilt \
 
 FROM alpine AS shpod
 ENV COMPLETIONS=/usr/share/bash-completion/completions
-RUN apk add apache2-utils bash bash-completion curl docker-cli file git iputils jq libintl ncurses openssh openssl sudo tmux tree vim yq
+RUN apk add apache2-utils bash bash-completion curl docker-cli file gettext git iputils jq libintl ncurses openssh openssl sudo tmux tree vim yq
 
 COPY --from=compose     /usr/local/bin/docker-compose /usr/local/bin
 COPY --from=crane       /usr/local/bin/crane          /usr/local/bin
@@ -193,6 +193,7 @@ RUN ( \
     bash --version | head -n1 ;\
     curl --version | head -n1 ;\
     docker version --format="Docker {{.Client.Version}}" ;\
+    envsubst --version | head -n1 ;\
     git --version ;\
     jq --version ;\
     ssh -V ;\
