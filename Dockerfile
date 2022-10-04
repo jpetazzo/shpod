@@ -110,11 +110,17 @@ ARG STERN_VERSION=1.20.1
 RUN helper-curl tar "--strip-components=1 stern_${STERN_VERSION}_linux_@GOARCH/stern" \
     https://github.com/stern/stern/releases/download/v${STERN_VERSION}/stern_${STERN_VERSION}_linux_@GOARCH.tar.gz
 
-# https://github.com/tilt-dev/tilt/releases/
+# https://github.com/tilt-dev/tilt/releases
 FROM builder AS tilt
 ARG TILT_VERSION=0.23.0
 RUN helper-curl tar tilt \
     https://github.com/tilt-dev/tilt/releases/download/v${TILT_VERSION}/tilt.${TILT_VERSION}.linux.@WTFARCH.tar.gz
+
+# https://github.com/vmware-tanzu/carvel-ytt/releases
+FROM builder AS ytt
+ARG YTT_VERSION=0.43.0
+RUN helper-curl bin ytt \
+    https://github.com/vmware-tanzu/carvel-ytt/releases/download/v${YTT_VERSION}/ytt-linux-@GOARCH
 
 FROM alpine AS shpod
 ENV COMPLETIONS=/usr/share/bash-completion/completions
@@ -137,6 +143,7 @@ COPY --from=ship        /usr/local/bin/ship           /usr/local/bin
 COPY --from=skaffold    /usr/local/bin/skaffold       /usr/local/bin
 COPY --from=stern       /usr/local/bin/stern          /usr/local/bin
 COPY --from=tilt        /usr/local/bin/tilt           /usr/local/bin
+COPY --from=ytt         /usr/local/bin/ytt            /usr/local/bin
 
 RUN set -e ; for BIN in \
     crane \
@@ -147,6 +154,7 @@ RUN set -e ; for BIN in \
     regctl \
     skaffold \
     tilt \
+    ytt \
     ; do echo $BIN ; $BIN completion bash > $COMPLETIONS/$BIN.bash ; done ;\
     yq shell-completion bash > $COMPLETIONS/yq.bash
 
