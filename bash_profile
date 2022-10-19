@@ -6,6 +6,9 @@ if ! [ -f ~/.kube/config ]; then
   # We need to access the Kubernetes API, so we'll do it
   # using the well-known endpoint.
   (
+    # Make sure that the file will have locked-down permissions.
+    # (Some tools like Helm will complain about it otherwise.)
+    umask 077
     export KUBERNETES_SERVICE_HOST=kubernetes.default.svc
     export KUBERNETES_SERVICE_PORT=443
     if kubectl get configmap kubeconfig >&/dev/null; then
