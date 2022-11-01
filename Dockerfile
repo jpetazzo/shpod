@@ -9,7 +9,7 @@ COPY helper-* /bin/
 
 # https://github.com/docker/compose/releases
 FROM builder AS compose
-ARG COMPOSE_VERSION=2.1.1
+ARG COMPOSE_VERSION=2.12.2
 RUN helper-curl bin docker-compose \
     https://github.com/docker/compose/releases/download/v${COMPOSE_VERSION}/docker-compose-linux-@UARCH
 
@@ -20,7 +20,7 @@ RUN cp $(find bin -name crane) /usr/local/bin
 
 # https://github.com/helm/helm/releases
 FROM builder AS helm
-ARG HELM_VERSION=3.7.1
+ARG HELM_VERSION=3.10.1
 RUN helper-curl tar "--strip-components=1 linux-@GOARCH/helm" \
     https://get.helm.sh/helm-v${HELM_VERSION}-linux-@GOARCH.tar.gz
 
@@ -52,13 +52,13 @@ RUN helper-curl bin kompose \
 
 # https://github.com/kubernetes/kubernetes/releases
 FROM builder AS kubectl
-ARG KUBECTL_VERSION=1.22.3
+ARG KUBECTL_VERSION=1.24.7
 RUN helper-curl bin kubectl \
     https://storage.googleapis.com/kubernetes-release/release/v${KUBECTL_VERSION}/bin/linux/@GOARCH/kubectl 
 
 # https://github.com/stackrox/kube-linter/releases
 FROM builder AS kube-linter
-ARG KUBELINTER_VERSION=0.2.5
+ARG KUBELINTER_VERSION=0.5.0
 RUN go install golang.stackrox.io/kube-linter/cmd/kube-linter@$KUBELINTER_VERSION
 RUN cp $(find bin -name kube-linter) /usr/local/bin
 
@@ -70,7 +70,7 @@ RUN helper-curl tar kubeseal \
 
 # https://github.com/kubernetes-sigs/kustomize/releases
 FROM builder AS kustomize
-ARG KUSTOMIZE_VERSION=4.4.1
+ARG KUSTOMIZE_VERSION=4.5.7
 RUN helper-curl tar kustomize \
     https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v$KUSTOMIZE_VERSION/kustomize_v${KUSTOMIZE_VERSION}_linux_@GOARCH.tar.gz
 
@@ -86,7 +86,7 @@ RUN helper-curl tar popeye \
 
 # https://github.com/regclient/regclient/releases
 FROM builder AS regctl
-ARG REGCLIENT_VERSION=0.3.9
+ARG REGCLIENT_VERSION=0.4.5
 RUN helper-curl bin regctl \
     https://github.com/regclient/regclient/releases/download/v$REGCLIENT_VERSION/regctl-linux-@GOARCH
 
@@ -106,13 +106,15 @@ RUN helper-curl bin skaffold \
 
 # https://github.com/stern/stern/releases
 FROM builder AS stern
-ARG STERN_VERSION=1.20.1
-RUN helper-curl tar "--strip-components=1 stern_${STERN_VERSION}_linux_@GOARCH/stern" \
+ARG STERN_VERSION=1.22.0
+RUN helper-curl tar stern \
     https://github.com/stern/stern/releases/download/v${STERN_VERSION}/stern_${STERN_VERSION}_linux_@GOARCH.tar.gz
 
+# Note: Tilt 0.26+ is dynamically linked against glibc,
+# so we're pinning to 0.25 for now.
 # https://github.com/tilt-dev/tilt/releases
 FROM builder AS tilt
-ARG TILT_VERSION=0.23.0
+ARG TILT_VERSION=0.25.3
 RUN helper-curl tar tilt \
     https://github.com/tilt-dev/tilt/releases/download/v${TILT_VERSION}/tilt.${TILT_VERSION}.linux.@WTFARCH.tar.gz
 
