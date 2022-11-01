@@ -126,7 +126,7 @@ RUN helper-curl bin ytt \
 
 FROM alpine AS shpod
 ENV COMPLETIONS=/usr/share/bash-completion/completions
-RUN apk add --no-cache apache2-utils bash bash-completion curl docker-cli file gettext git iputils jq libintl ncurses openssh openssl sudo tmux tree vim yq
+RUN apk add --no-cache apache2-utils bash bash-completion curl docker-cli file gettext git iputils jq libintl ncurses openssh openssl screen sudo tmux tree vim yq
 
 COPY --from=compose     /usr/local/bin/docker-compose /usr/local/bin
 COPY --from=crane       /usr/local/bin/crane          /usr/local/bin
@@ -194,6 +194,7 @@ RUN \
  ; fi
 COPY --chown=1000:1000 bash_profile /home/k8s/.bash_profile
 COPY --chown=1000:1000 vimrc /home/k8s/.vimrc
+COPY --chown=1000:1000 tmux.conf /home/k8s/.tmux.conf
 COPY motd /etc/motd
 COPY setup-tailhist.sh /usr/local/bin
 
