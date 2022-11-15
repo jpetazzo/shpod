@@ -126,7 +126,7 @@ RUN helper-curl bin ytt \
 
 FROM alpine AS shpod
 ENV COMPLETIONS=/usr/share/bash-completion/completions
-RUN apk add apache2-utils bash bash-completion curl docker-cli file gettext git iputils jq libintl ncurses openssh openssl screen sudo tmux tree vim yq
+RUN apk add --no-cache apache2-utils bash bash-completion curl docker-cli file gettext git iputils jq libintl ncurses openssh openssl screen sudo tmux tree vim yq
 
 COPY --from=compose     /usr/local/bin/docker-compose /usr/local/bin
 COPY --from=crane       /usr/local/bin/crane          /usr/local/bin
