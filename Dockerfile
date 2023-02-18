@@ -116,11 +116,17 @@ ARG TILT_VERSION=0.31.2
 RUN helper-curl tar tilt \
     https://github.com/tilt-dev/tilt/releases/download/v${TILT_VERSION}/tilt.${TILT_VERSION}.linux-alpine.@WTFARCH.tar.gz
 
-# https://github.com/vmware-tanzu/carvel-ytt/releases
+# https://github.com/carvel-dev/ytt/releases
 FROM builder AS ytt
 ARG YTT_VERSION=0.44.3
 RUN helper-curl bin ytt \
-    https://github.com/vmware-tanzu/carvel-ytt/releases/download/v${YTT_VERSION}/ytt-linux-@GOARCH
+    https://github.com/carvel-dev/ytt/releases/download/v${YTT_VERSION}/ytt-linux-@GOARCH
+
+# https://github.com/carvel-dev/kapp/releases
+FROM builder AS kapp
+ARG YTT_VERSION=0.54.3
+RUN helper-curl bin kapp \
+    https://github.com/carvel-dev/kapp/releases/download/v${YTT_VERSION}/kapp-linux-@GOARCH
 
 FROM alpine AS shpod
 ENV COMPLETIONS=/usr/share/bash-completion/completions
@@ -132,6 +138,7 @@ COPY --from=helm        /usr/local/bin/helm           /usr/local/bin
 COPY --from=httping     /usr/local/bin/httping        /usr/local/bin
 COPY --from=jid         /usr/local/bin/jid            /usr/local/bin
 COPY --from=k9s         /usr/local/bin/k9s            /usr/local/bin
+COPY --from=kapp        /usr/local/bin/kapp           /usr/local/bin
 COPY --from=kubectl     /usr/local/bin/kubectl        /usr/local/bin
 COPY --from=kube-linter /usr/local/bin/kube-linter    /usr/local/bin
 COPY --from=kubeseal    /usr/local/bin/kubeseal       /usr/local/bin
@@ -148,6 +155,7 @@ COPY --from=ytt         /usr/local/bin/ytt            /usr/local/bin
 RUN set -e ; for BIN in \
     crane \
     helm \
+    kapp \
     kubectl \
     kube-linter \
     kustomize \
@@ -214,6 +222,7 @@ RUN ( \
     httping --version ;\
     jid --version ;\
     echo "k9s $(k9s version | grep Version)" ;\
+    kapp --version | head -n1 ;\
     echo "kubectl $(kubectl version --short --client)" ;\
     echo "kube-linter $(kube-linter version)" ;\
     kubeseal --version ;\
