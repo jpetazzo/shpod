@@ -9,7 +9,7 @@ COPY helper-* /bin/
 
 # https://github.com/docker/compose/releases
 FROM builder AS compose
-ARG COMPOSE_VERSION=2.12.2
+ARG COMPOSE_VERSION=2.16.0
 RUN helper-curl bin docker-compose \
     https://github.com/docker/compose/releases/download/v${COMPOSE_VERSION}/docker-compose-linux-@UARCH
 
@@ -20,7 +20,7 @@ RUN cp $(find bin -name crane) /usr/local/bin
 
 # https://github.com/helm/helm/releases
 FROM builder AS helm
-ARG HELM_VERSION=3.10.1
+ARG HELM_VERSION=3.11.1
 RUN helper-curl tar "--strip-components=1 linux-@GOARCH/helm" \
     https://get.helm.sh/helm-v${HELM_VERSION}-linux-@GOARCH.tar.gz
 
@@ -43,7 +43,7 @@ RUN cp $(find bin -name jid) /usr/local/bin
 # https://github.com/derailed/k9s/releases
 FROM builder AS k9s
 RUN helper-curl tar k9s \
-    https://github.com/derailed/k9s/releases/latest/download/k9s_Linux_@WTFARCH.tar.gz
+    https://github.com/derailed/k9s/releases/latest/download/k9s_Linux_@GOARCH.tar.gz
 
 # https://github.com/kubernetes/kompose/releases
 FROM builder AS kompose
@@ -52,19 +52,19 @@ RUN helper-curl bin kompose \
 
 # https://github.com/kubernetes/kubernetes/releases
 FROM builder AS kubectl
-ARG KUBECTL_VERSION=1.24.7
+ARG KUBECTL_VERSION=1.26.1
 RUN helper-curl bin kubectl \
     https://storage.googleapis.com/kubernetes-release/release/v${KUBECTL_VERSION}/bin/linux/@GOARCH/kubectl 
 
 # https://github.com/stackrox/kube-linter/releases
 FROM builder AS kube-linter
-ARG KUBELINTER_VERSION=0.5.0
+ARG KUBELINTER_VERSION=0.6.0
 RUN go install golang.stackrox.io/kube-linter/cmd/kube-linter@$KUBELINTER_VERSION
 RUN cp $(find bin -name kube-linter) /usr/local/bin
 
 # https://github.com/bitnami-labs/sealed-secrets/releases
 FROM builder AS kubeseal
-ARG KUBESEAL_VERSION=0.17.4
+ARG KUBESEAL_VERSION=0.19.5
 RUN helper-curl tar kubeseal \
     https://github.com/bitnami-labs/sealed-secrets/releases/download/v$KUBESEAL_VERSION/kubeseal-$KUBESEAL_VERSION-linux-@GOARCH.tar.gz
 
@@ -99,28 +99,26 @@ ARG SHIP_VERSION=0.51.3
 RUN helper-curl tar ship \
     https://github.com/replicatedhq/ship/releases/download/v${SHIP_VERSION}/ship_${SHIP_VERSION}_linux_@GOARCH.tar.gz
 
-# https://github.com/GoogleContainerTools/skaffold/releases/tag/v1.34.0
+# https://github.com/GoogleContainerTools/skaffold/releases
 FROM builder AS skaffold
 RUN helper-curl bin skaffold \
     https://storage.googleapis.com/skaffold/releases/latest/skaffold-linux-@GOARCH
 
 # https://github.com/stern/stern/releases
 FROM builder AS stern
-ARG STERN_VERSION=1.22.0
+ARG STERN_VERSION=1.23.0
 RUN helper-curl tar stern \
     https://github.com/stern/stern/releases/download/v${STERN_VERSION}/stern_${STERN_VERSION}_linux_@GOARCH.tar.gz
 
-# Note: Tilt 0.26+ is dynamically linked against glibc,
-# so we're pinning to 0.25 for now.
 # https://github.com/tilt-dev/tilt/releases
 FROM builder AS tilt
-ARG TILT_VERSION=0.25.3
+ARG TILT_VERSION=0.31.2
 RUN helper-curl tar tilt \
-    https://github.com/tilt-dev/tilt/releases/download/v${TILT_VERSION}/tilt.${TILT_VERSION}.linux.@WTFARCH.tar.gz
+    https://github.com/tilt-dev/tilt/releases/download/v${TILT_VERSION}/tilt.${TILT_VERSION}.linux-alpine.@WTFARCH.tar.gz
 
 # https://github.com/vmware-tanzu/carvel-ytt/releases
 FROM builder AS ytt
-ARG YTT_VERSION=0.43.0
+ARG YTT_VERSION=0.44.3
 RUN helper-curl bin ytt \
     https://github.com/vmware-tanzu/carvel-ytt/releases/download/v${YTT_VERSION}/ytt-linux-@GOARCH
 
