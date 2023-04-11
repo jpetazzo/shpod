@@ -9,7 +9,7 @@ COPY helper-* /bin/
 
 # https://github.com/docker/compose/releases
 FROM builder AS compose
-ARG COMPOSE_VERSION=2.16.0
+ARG COMPOSE_VERSION=2.17.2
 RUN helper-curl bin docker-compose \
     https://github.com/docker/compose/releases/download/v${COMPOSE_VERSION}/docker-compose-linux-@UARCH
 
@@ -20,7 +20,7 @@ RUN cp $(find bin -name crane) /usr/local/bin
 
 # https://github.com/helm/helm/releases
 FROM builder AS helm
-ARG HELM_VERSION=3.11.1
+ARG HELM_VERSION=3.11.2
 RUN helper-curl tar "--strip-components=1 linux-@GOARCH/helm" \
     https://get.helm.sh/helm-v${HELM_VERSION}-linux-@GOARCH.tar.gz
 
@@ -52,25 +52,25 @@ RUN helper-curl bin kompose \
 
 # https://github.com/kubernetes/kubernetes/releases
 FROM builder AS kubectl
-ARG KUBECTL_VERSION=1.26.1
+ARG KUBECTL_VERSION=1.26.3
 RUN helper-curl bin kubectl \
     https://storage.googleapis.com/kubernetes-release/release/v${KUBECTL_VERSION}/bin/linux/@GOARCH/kubectl 
 
 # https://github.com/stackrox/kube-linter/releases
 FROM builder AS kube-linter
-ARG KUBELINTER_VERSION=0.6.0
+ARG KUBELINTER_VERSION=v0.6.1
 RUN go install golang.stackrox.io/kube-linter/cmd/kube-linter@$KUBELINTER_VERSION
 RUN cp $(find bin -name kube-linter) /usr/local/bin
 
 # https://github.com/bitnami-labs/sealed-secrets/releases
 FROM builder AS kubeseal
-ARG KUBESEAL_VERSION=0.19.5
+ARG KUBESEAL_VERSION=0.20.2
 RUN helper-curl tar kubeseal \
     https://github.com/bitnami-labs/sealed-secrets/releases/download/v$KUBESEAL_VERSION/kubeseal-$KUBESEAL_VERSION-linux-@GOARCH.tar.gz
 
 # https://github.com/kubernetes-sigs/kustomize/releases
 FROM builder AS kustomize
-ARG KUSTOMIZE_VERSION=4.5.7
+ARG KUSTOMIZE_VERSION=5.0.1
 RUN helper-curl tar kustomize \
     https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v$KUSTOMIZE_VERSION/kustomize_v${KUSTOMIZE_VERSION}_linux_@GOARCH.tar.gz
 
@@ -86,7 +86,7 @@ RUN helper-curl tar popeye \
 
 # https://github.com/regclient/regclient/releases
 FROM builder AS regctl
-ARG REGCLIENT_VERSION=0.4.5
+ARG REGCLIENT_VERSION=0.4.7
 RUN helper-curl bin regctl \
     https://github.com/regclient/regclient/releases/download/v$REGCLIENT_VERSION/regctl-linux-@GOARCH
 
@@ -106,25 +106,25 @@ RUN helper-curl bin skaffold \
 
 # https://github.com/stern/stern/releases
 FROM builder AS stern
-ARG STERN_VERSION=1.23.0
+ARG STERN_VERSION=1.24.0
 RUN helper-curl tar stern \
     https://github.com/stern/stern/releases/download/v${STERN_VERSION}/stern_${STERN_VERSION}_linux_@GOARCH.tar.gz
 
 # https://github.com/tilt-dev/tilt/releases
 FROM builder AS tilt
-ARG TILT_VERSION=0.31.2
+ARG TILT_VERSION=0.32.0
 RUN helper-curl tar tilt \
     https://github.com/tilt-dev/tilt/releases/download/v${TILT_VERSION}/tilt.${TILT_VERSION}.linux-alpine.@WTFARCH.tar.gz
 
 # https://github.com/carvel-dev/ytt/releases
 FROM builder AS ytt
-ARG YTT_VERSION=0.44.3
+ARG YTT_VERSION=0.45.0
 RUN helper-curl bin ytt \
     https://github.com/carvel-dev/ytt/releases/download/v${YTT_VERSION}/ytt-linux-@GOARCH
 
 # https://github.com/carvel-dev/kapp/releases
 FROM builder AS kapp
-ARG YTT_VERSION=0.54.3
+ARG YTT_VERSION=0.55.0
 RUN helper-curl bin kapp \
     https://github.com/carvel-dev/kapp/releases/download/v${YTT_VERSION}/kapp-linux-@GOARCH
 
