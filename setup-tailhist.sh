@@ -5,7 +5,7 @@ cd /tmp/tailhist
 WEBSOCKETD_VERSION=0.4.1
 wget https://github.com/joewalnes/websocketd/releases/download/v$WEBSOCKETD_VERSION/websocketd-$WEBSOCKETD_VERSION-linux_amd64.zip
 unzip websocketd-$WEBSOCKETD_VERSION-linux_amd64.zip
-curl https://raw.githubusercontent.com/jpetazzo/container.training/main/prepare-vms/lib/tailhist.html > index.html
+curl https://raw.githubusercontent.com/jpetazzo/container.training/main/prepare-labs/lib/tailhist.html > index.html
 kubectl patch service shpod --namespace shpod -p "
 spec:
   ports:
