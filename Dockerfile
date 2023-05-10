@@ -62,6 +62,12 @@ ARG KUBELINTER_VERSION=v0.6.1
 RUN go install golang.stackrox.io/kube-linter/cmd/kube-linter@$KUBELINTER_VERSION
 RUN cp $(find bin -name kube-linter) /usr/local/bin
 
+# https://github.com/doitintl/kube-no-trouble/releases
+FROM builder AS kubent
+ARG KUBENT_VERSION=0.7.0
+RUN helper-curl tar kubent \
+    https://github.com/doitintl/kube-no-trouble/releases/download/${KUBENT_VERSION}/kubent-${KUBENT_VERSION}-linux-@GOARCH.tar.gz
+
 # https://github.com/bitnami-labs/sealed-secrets/releases
 FROM builder AS kubeseal
 ARG KUBESEAL_VERSION=0.20.2
@@ -147,6 +153,7 @@ COPY --from=k9s         /usr/local/bin/k9s            /usr/local/bin
 COPY --from=kapp        /usr/local/bin/kapp           /usr/local/bin
 COPY --from=kubectl     /usr/local/bin/kubectl        /usr/local/bin
 COPY --from=kube-linter /usr/local/bin/kube-linter    /usr/local/bin
+COPY --from=kubent      /usr/local/bin/kubent         /usr/local/bin
 COPY --from=kubeseal    /usr/local/bin/kubeseal       /usr/local/bin
 COPY --from=kustomize   /usr/local/bin/kustomize      /usr/local/bin
 COPY --from=ngrok       /usr/local/bin/ngrok          /usr/local/bin
@@ -233,6 +240,7 @@ RUN ( \
     kapp --version | head -n1 ;\
     echo "kubectl $(kubectl version --short --client)" ;\
     echo "kube-linter $(kube-linter version)" ;\
+    echo "kubent $(kubent --version 2>&1)" ;\
     kubeseal --version ;\
     kustomize version --short ;\
     ngrok version ;\
