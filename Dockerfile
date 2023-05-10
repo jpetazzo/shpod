@@ -116,6 +116,12 @@ ARG TILT_VERSION=0.32.0
 RUN helper-curl tar tilt \
     https://github.com/tilt-dev/tilt/releases/download/v${TILT_VERSION}/tilt.${TILT_VERSION}.linux-alpine.@WTFARCH.tar.gz
 
+# https://github.com/vmware-tanzu/velero/releases
+FROM builder AS velero
+ARG VELERO_VERSION=1.11.0
+RUN helper-curl tar "--strip-components=1 velero-v${VELERO_VERSION}-linux-@GOARCH/velero" \
+    https://github.com/vmware-tanzu/velero/releases/download/v${VELERO_VERSION}/velero-v${VELERO_VERSION}-linux-@GOARCH.tar.gz
+
 # https://github.com/carvel-dev/ytt/releases
 FROM builder AS ytt
 ARG YTT_VERSION=0.45.0
@@ -150,6 +156,7 @@ COPY --from=ship        /usr/local/bin/ship           /usr/local/bin
 COPY --from=skaffold    /usr/local/bin/skaffold       /usr/local/bin
 COPY --from=stern       /usr/local/bin/stern          /usr/local/bin
 COPY --from=tilt        /usr/local/bin/tilt           /usr/local/bin
+COPY --from=velero      /usr/local/bin/velero         /usr/local/bin
 COPY --from=ytt         /usr/local/bin/ytt            /usr/local/bin
 
 RUN set -e ; for BIN in \
@@ -162,6 +169,7 @@ RUN set -e ; for BIN in \
     regctl \
     skaffold \
     tilt \
+    velero \
     ytt \
     ; do echo $BIN ; $BIN completion bash > $COMPLETIONS/$BIN.bash ; done ;\
     yq shell-completion bash > $COMPLETIONS/yq.bash
@@ -234,6 +242,7 @@ RUN ( \
     echo "skaffold $(skaffold version)" ;\
     echo "stern $(stern --version | grep ^version)" ;\
     echo "tilt $(tilt version)" ;\
+    echo "velero $(velero version --client-only | grep Version)" ;\
     ) > versions.txt
 
 # If there is a tty, give us a shell.
