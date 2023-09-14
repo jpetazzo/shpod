@@ -179,7 +179,7 @@ RUN set -e ; for BIN in \
     velero \
     ytt \
     ; do echo $BIN ; $BIN completion bash > $COMPLETIONS/$BIN.bash ; done ;\
-    yq shell-completion bash > $COMPLETIONS/yq.bash
+    stern --completion bash > $COMPLETIONS/stern
 
 RUN cd /tmp \
  && git clone https://github.com/ahmetb/kubectx \
