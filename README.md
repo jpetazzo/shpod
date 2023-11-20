@@ -1,12 +1,6 @@
 # shpod
 
-**TL,DR:** `curl https://shpod.sh | sh`
-
-If you are looking for an image that works on the ARM architecture
-(like the Raspberry Pi or the Apple M1), have a look at
-[BretFisher/shpod](https://github.com/BretFisher/shpod) instead.
-Bret's fork is also a state-of-the-art example of a multi-arch
-Dockerfile!
+**TL,DR:** `curl https://shpod.in | sh`
 
 
 ## What's this?
@@ -143,12 +137,15 @@ To execute it:
 curl https://raw.githubusercontent.com/jpetazzo/shpod/main/shpod.sh | sh
 ```
 
-It's also available with short URLs:
+It's also available with a short URL:
 
 ```bash
-curl https://shpod.sh | sh
-curl https://shpod.me | sh
+curl https://shpod.in | sh
 ```
+
+(Note: It used to be available at shpod.sh and shpod.me, but these
+became pretty expensive so I decided to drop them. If you were using
+them and want something fast to type, switch to shpod.in!)
 
 If you don't like `curl|sh`, and/or if you want to execute things
 step by step, check the next section.
@@ -200,9 +197,9 @@ that ConfigMap and use it to populate `~/.kube/config`.
 This lets you inject a custom kubeconfig file into shpod.
 
 
-## Support for other architectures
+## Multi-arch support
 
-As of November 2021, the Dockerfile in this repository should be able
-to build images for other architectures. However, when trying to install
-a compiled binary that is not available for another architecture, a dummy
-placeholder will be installed instead.
+Shpod supports both Intel and ARM 64 bits architectures. The Dockerfile
+in this repository should be able to support other architectures fairly
+easily. If a given tool isn't available on the target architecture,
+a dummy placeholder will be installed instead.
