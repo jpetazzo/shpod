@@ -52,9 +52,10 @@ KUBE_PS1_NS_COLOR="green"
 PS1="\e[1m\e[31m[\$HOSTIP] \e[0m(\$(kube_ps1)) \e[34m\u@\h\e[35m \w\e[0m\n$ "
 
 export EDITOR=vim
+export KUBECOLOR_LIGHT_BACKGROUND=true
 export PATH="$HOME/.krew/bin:$PATH"
 
-alias k=kubectl
+alias k=kubecolor
 complete -F __start_kubectl k
 . /usr/share/bash-completion/completions/kubectl.bash
 
