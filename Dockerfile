@@ -1,3 +1,38 @@
+# https://github.com/docker/compose/releases
+ARG COMPOSE_VERSION=2.17.2
+# https://github.com/fluxcd/flux2/releases
+ARG FLUX_VERSION=2.3.0
+# https://github.com/helm/helm/releases
+ARG HELM_VERSION=3.15.4
+# https://github.com/simeji/jid/releases
+ARG JID_VERSION=0.7.6
+# https://github.com/carvel-dev/kapp/releases
+ARG KAPP_VERSION=0.63.2
+# https://github.com/kubecolor/kubecolor/releases
+ARG KUBECOLOR_VERSION=0.3.3
+# https://github.com/kubernetes/kubernetes/releases
+ARG KUBECTL_VERSION=1.31.0
+# https://github.com/stackrox/kube-linter/releases
+ARG KUBELINTER_VERSION=v0.6.8
+# https://github.com/doitintl/kube-no-trouble/releases
+ARG KUBENT_VERSION=0.7.3
+# https://github.com/bitnami-labs/sealed-secrets/releases
+ARG KUBESEAL_VERSION=0.27.1
+# https://github.com/kubernetes-sigs/kustomize/releases
+ARG KUSTOMIZE_VERSION=5.4.3
+# https://github.com/regclient/regclient/releases
+ARG REGCLIENT_VERSION=0.7.1
+# https://github.com/replicatedhq/ship/releases
+ARG SHIP_VERSION=0.55.0
+# https://github.com/stern/stern/releases
+ARG STERN_VERSION=1.30.0
+# https://github.com/tilt-dev/tilt/releases
+ARG TILT_VERSION=0.33.19
+# https://github.com/vmware-tanzu/velero/releases
+ARG VELERO_VERSION=1.14.1
+# https://github.com/carvel-dev/ytt/releases
+ARG YTT_VERSION=0.50.0
+
 FROM --platform=$BUILDPLATFORM golang:alpine AS builder
 RUN apk add curl git
 ARG BUILDARCH TARGETARCH
@@ -14,7 +49,7 @@ RUN helper-curl bin argocd \
 
 # https://github.com/docker/compose/releases
 FROM builder AS compose
-ARG COMPOSE_VERSION=2.17.2
+ARG COMPOSE_VERSION
 RUN helper-curl bin docker-compose \
     https://github.com/docker/compose/releases/download/v${COMPOSE_VERSION}/docker-compose-linux-@UARCH
 
@@ -25,13 +60,13 @@ RUN cp $(find bin -name crane) /usr/local/bin
 
 # https://github.com/fluxcd/flux2/releases
 FROM builder AS flux
-ARG FLUX_VERSION=2.3.0
+ARG FLUX_VERSION
 RUN helper-curl tar flux \
     https://github.com/fluxcd/flux2/releases/download/v$FLUX_VERSION/flux_${FLUX_VERSION}_linux_@GOARCH.tar.gz
 
 # https://github.com/helm/helm/releases
 FROM builder AS helm
-ARG HELM_VERSION=3.11.2
+ARG HELM_VERSION
 RUN helper-curl tar "--strip-components=1 linux-@GOARCH/helm" \
     https://get.helm.sh/helm-v${HELM_VERSION}-linux-@GOARCH.tar.gz
 
@@ -48,7 +83,7 @@ RUN make install BINDIR=/usr/local/bin
 
 # https://github.com/simeji/jid/releases
 FROM builder AS jid
-ARG JID_VERSION=0.7.6
+ARG JID_VERSION
 RUN go install github.com/simeji/jid/cmd/jid@v$JID_VERSION
 RUN cp $(find bin -name jid) /usr/local/bin
 
@@ -64,37 +99,37 @@ RUN helper-curl bin kompose \
 
 # https://github.com/kubecolor/kubecolor/releases
 FROM builder AS kubecolor
-ARG KUBECOLOR_VERSION=0.3.2
+ARG KUBECOLOR_VERSION
 RUN helper-curl tar kubecolor \
     https://github.com/kubecolor/kubecolor/releases/download/v${KUBECOLOR_VERSION}/kubecolor_${KUBECOLOR_VERSION}_linux_@GOARCH.tar.gz
 
 # https://github.com/kubernetes/kubernetes/releases
 FROM builder AS kubectl
-ARG KUBECTL_VERSION=1.30.2
+ARG KUBECTL_VERSION
 RUN helper-curl bin kubectl \
     https://storage.googleapis.com/kubernetes-release/release/v${KUBECTL_VERSION}/bin/linux/@GOARCH/kubectl 
 
 # https://github.com/stackrox/kube-linter/releases
 FROM builder AS kube-linter
-ARG KUBELINTER_VERSION=v0.6.8
+ARG KUBELINTER_VERSION
 RUN go install golang.stackrox.io/kube-linter/cmd/kube-linter@$KUBELINTER_VERSION
 RUN cp $(find bin -name kube-linter) /usr/local/bin
 
 # https://github.com/doitintl/kube-no-trouble/releases
 FROM builder AS kubent
-ARG KUBENT_VERSION=0.7.2
+ARG KUBENT_VERSION
 RUN helper-curl tar kubent \
     https://github.com/doitintl/kube-no-trouble/releases/download/${KUBENT_VERSION}/kubent-${KUBENT_VERSION}-linux-@GOARCH.tar.gz
 
 # https://github.com/bitnami-labs/sealed-secrets/releases
 FROM builder AS kubeseal
-ARG KUBESEAL_VERSION=0.27.0
+ARG KUBESEAL_VERSION
 RUN helper-curl tar kubeseal \
     https://github.com/bitnami-labs/sealed-secrets/releases/download/v$KUBESEAL_VERSION/kubeseal-$KUBESEAL_VERSION-linux-@GOARCH.tar.gz
 
 # https://github.com/kubernetes-sigs/kustomize/releases
 FROM builder AS kustomize
-ARG KUSTOMIZE_VERSION=5.4.2
+ARG KUSTOMIZE_VERSION
 RUN helper-curl tar kustomize \
     https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v$KUSTOMIZE_VERSION/kustomize_v${KUSTOMIZE_VERSION}_linux_@GOARCH.tar.gz
 
@@ -110,7 +145,7 @@ RUN helper-curl tar popeye \
 
 # https://github.com/regclient/regclient/releases
 FROM builder AS regctl
-ARG REGCLIENT_VERSION=0.6.1
+ARG REGCLIENT_VERSION
 RUN helper-curl bin regctl \
     https://github.com/regclient/regclient/releases/download/v$REGCLIENT_VERSION/regctl-linux-@GOARCH
 
@@ -119,7 +154,7 @@ RUN helper-curl bin regctl \
 # to be available anymore in more recent versions (or requires some work
 # to adapt). Also, it's not available on all platforms and doesn't compile.
 FROM builder AS ship
-ARG SHIP_VERSION=0.51.3
+ARG SHIP_VERSION
 RUN helper-curl tar ship \
     https://github.com/replicatedhq/ship/releases/download/v${SHIP_VERSION}/ship_${SHIP_VERSION}_linux_@GOARCH.tar.gz
 
@@ -130,33 +165,33 @@ RUN helper-curl bin skaffold \
 
 # https://github.com/stern/stern/releases
 FROM builder AS stern
-ARG STERN_VERSION=1.30.0
+ARG STERN_VERSION
 RUN helper-curl tar stern \
     https://github.com/stern/stern/releases/download/v${STERN_VERSION}/stern_${STERN_VERSION}_linux_@GOARCH.tar.gz
 
 # https://github.com/tilt-dev/tilt/releases
 FROM builder AS tilt
-ARG TILT_VERSION=0.33.17
+ARG TILT_VERSION
 RUN helper-curl tar tilt \
     https://github.com/tilt-dev/tilt/releases/download/v${TILT_VERSION}/tilt.${TILT_VERSION}.linux-alpine.@WTFARCH.tar.gz
 
 # https://github.com/vmware-tanzu/velero/releases
 FROM builder AS velero
-ARG VELERO_VERSION=1.14.0
+ARG VELERO_VERSION
 RUN helper-curl tar "--strip-components=1 velero-v${VELERO_VERSION}-linux-@GOARCH/velero" \
     https://github.com/vmware-tanzu/velero/releases/download/v${VELERO_VERSION}/velero-v${VELERO_VERSION}-linux-@GOARCH.tar.gz
 
 # https://github.com/carvel-dev/ytt/releases
 FROM builder AS ytt
-ARG YTT_VERSION=0.49.1
+ARG YTT_VERSION
 RUN helper-curl bin ytt \
     https://github.com/carvel-dev/ytt/releases/download/v${YTT_VERSION}/ytt-linux-@GOARCH
 
 # https://github.com/carvel-dev/kapp/releases
 FROM builder AS kapp
-ARG YTT_VERSION=0.62.1
+ARG KAPP_VERSION
 RUN helper-curl bin kapp \
-    https://github.com/carvel-dev/kapp/releases/download/v${YTT_VERSION}/kapp-linux-@GOARCH
+    https://github.com/carvel-dev/kapp/releases/download/v${KAPP_VERSION}/kapp-linux-@GOARCH
 
 FROM alpine AS shpod
 ENV COMPLETIONS=/usr/share/bash-completion/completions
