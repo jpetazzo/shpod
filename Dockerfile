@@ -34,7 +34,7 @@ ARG VELERO_VERSION=1.14.1
 ARG YTT_VERSION=0.50.0
 
 FROM --platform=$BUILDPLATFORM golang:alpine AS builder
-RUN apk add curl git
+RUN apk add curl git upx
 ARG BUILDARCH TARGETARCH
 ENV BUILDARCH=$BUILDARCH \
     CGO_ENABLED=0 \
@@ -46,108 +46,129 @@ COPY helper-* /bin/
 FROM builder AS argocd
 RUN helper-curl bin argocd \
     https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-@GOARCH
+RUN upx /usr/local/bin/argocd
 
 # https://github.com/docker/compose/releases
 FROM builder AS compose
 ARG COMPOSE_VERSION
 RUN helper-curl bin docker-compose \
     https://github.com/docker/compose/releases/download/v${COMPOSE_VERSION}/docker-compose-linux-@UARCH
+RUN upx /usr/local/bin/docker-compose
 
 # https://github.com/google/go-containerregistry/tree/main/cmd/crane
 FROM builder AS crane
 RUN go install github.com/google/go-containerregistry/cmd/crane@latest
 RUN cp $(find bin -name crane) /usr/local/bin
+RUN upx /usr/local/bin/crane
 
 # https://github.com/fluxcd/flux2/releases
 FROM builder AS flux
 ARG FLUX_VERSION
 RUN helper-curl tar flux \
     https://github.com/fluxcd/flux2/releases/download/v$FLUX_VERSION/flux_${FLUX_VERSION}_linux_@GOARCH.tar.gz
+RUN upx /usr/local/bin/flux
 
 # https://github.com/helm/helm/releases
 FROM builder AS helm
 ARG HELM_VERSION
 RUN helper-curl tar "--strip-components=1 linux-@GOARCH/helm" \
     https://get.helm.sh/helm-v${HELM_VERSION}-linux-@GOARCH.tar.gz
+RUN upx /usr/local/bin/helm
 
 # Use emulation instead of cross-compilation for that one.
 # (The source is small enough, so I don't know if cross-compilation
 # would be worth the effort.)
 FROM alpine AS httping
-RUN apk add build-base cmake gettext git musl-libintl ncurses-dev
-RUN git clone https://github.com/folkertvanheusden/httping
-WORKDIR httping
-RUN sed -i s/60/0/ utils.c
-RUN cmake .
-RUN make install BINDIR=/usr/local/bin
+RUN <<EOF sh
+    apk add build-base cmake gettext git musl-libintl ncurses-dev upx
+    git clone https://github.com/folkertvanheusden/httping
+    cd httping
+    sed -i s/60/0/ utils.c
+    cmake .
+    make install BINDIR=/usr/local/bin
+    upx /usr/local/bin/httping
+EOF
 
 # https://github.com/simeji/jid/releases
 FROM builder AS jid
 ARG JID_VERSION
 RUN go install github.com/simeji/jid/cmd/jid@v$JID_VERSION
 RUN cp $(find bin -name jid) /usr/local/bin
+RUN upx /usr/local/bin/jid
 
 # https://github.com/derailed/k9s/releases
 FROM builder AS k9s
 RUN helper-curl tar k9s \
     https://github.com/derailed/k9s/releases/latest/download/k9s_Linux_@GOARCH.tar.gz
+RUN upx /usr/local/bin/k9s
 
 # https://github.com/kubernetes/kompose/releases
 FROM builder AS kompose
 RUN helper-curl bin kompose \
     https://github.com/kubernetes/kompose/releases/latest/download/kompose-linux-@GOARCH
+RUN upx /usr/local/bin/kompose
 
 # https://github.com/kubecolor/kubecolor/releases
 FROM builder AS kubecolor
 ARG KUBECOLOR_VERSION
 RUN helper-curl tar kubecolor \
     https://github.com/kubecolor/kubecolor/releases/download/v${KUBECOLOR_VERSION}/kubecolor_${KUBECOLOR_VERSION}_linux_@GOARCH.tar.gz
+RUN upx /usr/local/bin/kubecolor
 
 # https://github.com/kubernetes/kubernetes/releases
 FROM builder AS kubectl
 ARG KUBECTL_VERSION
 RUN helper-curl bin kubectl \
     https://storage.googleapis.com/kubernetes-release/release/v${KUBECTL_VERSION}/bin/linux/@GOARCH/kubectl 
+RUN upx /usr/local/bin/kubectl
 
 # https://github.com/stackrox/kube-linter/releases
 FROM builder AS kube-linter
 ARG KUBELINTER_VERSION
 RUN go install golang.stackrox.io/kube-linter/cmd/kube-linter@$KUBELINTER_VERSION
 RUN cp $(find bin -name kube-linter) /usr/local/bin
+RUN upx /usr/local/bin/kube-linter
 
 # https://github.com/doitintl/kube-no-trouble/releases
 FROM builder AS kubent
 ARG KUBENT_VERSION
 RUN helper-curl tar kubent \
     https://github.com/doitintl/kube-no-trouble/releases/download/${KUBENT_VERSION}/kubent-${KUBENT_VERSION}-linux-@GOARCH.tar.gz
+RUN upx /usr/local/bin/kubent
 
 # https://github.com/bitnami-labs/sealed-secrets/releases
 FROM builder AS kubeseal
 ARG KUBESEAL_VERSION
 RUN helper-curl tar kubeseal \
     https://github.com/bitnami-labs/sealed-secrets/releases/download/v$KUBESEAL_VERSION/kubeseal-$KUBESEAL_VERSION-linux-@GOARCH.tar.gz
+RUN upx /usr/local/bin/kubeseal
 
 # https://github.com/kubernetes-sigs/kustomize/releases
 FROM builder AS kustomize
 ARG KUSTOMIZE_VERSION
 RUN helper-curl tar kustomize \
     https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v$KUSTOMIZE_VERSION/kustomize_v${KUSTOMIZE_VERSION}_linux_@GOARCH.tar.gz
+RUN upx /usr/local/bin/kustomize
 
 # https://ngrok.com/download
 FROM builder AS ngrok
 RUN helper-curl tar ngrok \
     https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-@GOARCH.tgz
+RUN upx /usr/local/bin/ngrok
 
 # https://github.com/derailed/popeye/releases
 FROM builder AS popeye
 RUN helper-curl tar popeye \
     https://github.com/derailed/popeye/releases/latest/download/popeye_Linux_@WTFARCH.tar.gz
+# file is too small to be compressed
+# RUN upx /usr/local/bin/popeye
 
 # https://github.com/regclient/regclient/releases
 FROM builder AS regctl
 ARG REGCLIENT_VERSION
 RUN helper-curl bin regctl \
     https://github.com/regclient/regclient/releases/download/v$REGCLIENT_VERSION/regctl-linux-@GOARCH
+RUN upx /usr/local/bin/regctl
 
 # This tool is still used in the kustomize section, but we will probably
 # deprecate it eventually as we only use a tiny feature that doesn't seem
@@ -157,41 +178,48 @@ FROM builder AS ship
 ARG SHIP_VERSION
 RUN helper-curl tar ship \
     https://github.com/replicatedhq/ship/releases/download/v${SHIP_VERSION}/ship_${SHIP_VERSION}_linux_@GOARCH.tar.gz
+RUN upx /usr/local/bin/ship
 
 # https://github.com/GoogleContainerTools/skaffold/releases
 FROM builder AS skaffold
 RUN helper-curl bin skaffold \
     https://storage.googleapis.com/skaffold/releases/latest/skaffold-linux-@GOARCH
+RUN upx /usr/local/bin/skaffold
 
 # https://github.com/stern/stern/releases
 FROM builder AS stern
 ARG STERN_VERSION
 RUN helper-curl tar stern \
     https://github.com/stern/stern/releases/download/v${STERN_VERSION}/stern_${STERN_VERSION}_linux_@GOARCH.tar.gz
+RUN upx /usr/local/bin/stern
 
 # https://github.com/tilt-dev/tilt/releases
 FROM builder AS tilt
 ARG TILT_VERSION
 RUN helper-curl tar tilt \
     https://github.com/tilt-dev/tilt/releases/download/v${TILT_VERSION}/tilt.${TILT_VERSION}.linux-alpine.@WTFARCH.tar.gz
+RUN upx /usr/local/bin/tilt
 
 # https://github.com/vmware-tanzu/velero/releases
 FROM builder AS velero
 ARG VELERO_VERSION
 RUN helper-curl tar "--strip-components=1 velero-v${VELERO_VERSION}-linux-@GOARCH/velero" \
     https://github.com/vmware-tanzu/velero/releases/download/v${VELERO_VERSION}/velero-v${VELERO_VERSION}-linux-@GOARCH.tar.gz
+RUN upx /usr/local/bin/velero
 
 # https://github.com/carvel-dev/ytt/releases
 FROM builder AS ytt
 ARG YTT_VERSION
 RUN helper-curl bin ytt \
     https://github.com/carvel-dev/ytt/releases/download/v${YTT_VERSION}/ytt-linux-@GOARCH
+RUN upx /usr/local/bin/ytt
 
 # https://github.com/carvel-dev/kapp/releases
 FROM builder AS kapp
 ARG KAPP_VERSION
 RUN helper-curl bin kapp \
     https://github.com/carvel-dev/kapp/releases/download/v${KAPP_VERSION}/kapp-linux-@GOARCH
+RUN upx /usr/local/bin/kapp
 
 FROM alpine AS shpod
 ENV COMPLETIONS=/usr/share/bash-completion/completions
