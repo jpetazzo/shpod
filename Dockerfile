@@ -253,7 +253,7 @@ COPY setup-tailhist.sh /usr/local/bin
 RUN ( \
     ab -V | head -n1 ;\
     argocd version --client | head -n1 ;\
-    echo "bento $(bento --version)" ;\
+    echo "bento $(bento --version | head -n1)" ;\
     bash --version | head -n1 ;\
     curl --version | head -n1 ;\
     docker version --format="Docker {{.Client.Version}}" ;\
@@ -272,11 +272,11 @@ RUN ( \
     echo "k9s $(k9s version | grep Version)" ;\
     kapp --version | head -n1 ;\
     echo "kubecolor $(kubecolor --kubecolor-version)" ;\
-    echo "kubectl $(kubectl version --short --client)" ;\
+    echo "kubectl $(kubectl version --client | head -n1)" ;\
     echo "kube-linter $(kube-linter version)" ;\
     echo "kubent $(kubent --version 2>&1)" ;\
     kubeseal --version ;\
-    kustomize version --short ;\
+    echo "kustomize $(kustomize version | head -n1)" ;\
     ngrok version ;\
     echo "popeye $(popeye version | grep Version)" ;\
     echo "regctl $(regctl version --format={{.VCSTag}})" ;\
