@@ -12,6 +12,12 @@ FROM builder AS argocd
 RUN helper-curl bin argocd \
     https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-@GOARCH
 
+# https://github.com/warpstreamlabs/bento/releases
+FROM builder AS bento
+ARG BENTO_VERSION=1.3.0
+RUN helper-curl tar bento \
+    https://github.com/warpstreamlabs/bento/releases/download/v${BENTO_VERSION}/bento_${BENTO_VERSION}_linux_@GOARCH.tar.gz
+
 # https://github.com/docker/compose/releases
 FROM builder AS compose
 ARG COMPOSE_VERSION=2.17.2
@@ -39,7 +45,7 @@ RUN helper-curl tar "--strip-components=1 linux-@GOARCH/helm" \
 # (The source is small enough, so I don't know if cross-compilation
 # would be worth the effort.)
 FROM alpine AS httping
-RUN apk add build-base cmake gettext git musl-libintl ncurses-dev
+RUN apk add build-base cmake gettext git musl-libintl ncurses-dev openssl-dev
 RUN git clone https://github.com/folkertvanheusden/httping
 WORKDIR httping
 RUN sed -i s/60/0/ utils.c
@@ -160,9 +166,10 @@ RUN helper-curl bin kapp \
 
 FROM alpine AS shpod
 ENV COMPLETIONS=/usr/share/bash-completion/completions
-RUN apk add --no-cache apache2-utils bash bash-completion curl docker-cli file gettext git iputils jq libintl ncurses openssh openssl screen sudo tmux tree vim yq
+RUN apk add --no-cache apache2-utils bash bash-completion curl docker-cli file fzf gettext git iputils jq libintl ncurses openssh openssl screen sudo tmux tree unzip vim yq
 
 COPY --from=argocd      /usr/local/bin/argocd         /usr/local/bin
+COPY --from=bento       /usr/local/bin/bento          /usr/local/bin
 COPY --from=compose     /usr/local/bin/docker-compose /usr/local/bin
 COPY --from=crane       /usr/local/bin/crane          /usr/local/bin
 COPY --from=flux        /usr/local/bin/flux           /usr/local/bin
@@ -246,6 +253,7 @@ COPY setup-tailhist.sh /usr/local/bin
 RUN ( \
     ab -V | head -n1 ;\
     argocd version --client | head -n1 ;\
+    echo "bento $(bento --version)" ;\
     bash --version | head -n1 ;\
     curl --version | head -n1 ;\
     docker version --format="Docker {{.Client.Version}}" ;\
