@@ -35,6 +35,12 @@ ARG FLUX_VERSION=2.3.0
 RUN helper-curl tar flux \
     https://github.com/fluxcd/flux2/releases/download/v$FLUX_VERSION/flux_${FLUX_VERSION}_linux_@GOARCH.tar.gz
 
+# https://github.com/helmfile/helmfile/releases
+FROM builder AS helmfile
+ARG HELMFILE_VERSION=0.169.1
+RUN helper-curl tar helmfile \
+    https://github.com/helmfile/helmfile/releases/download/v${HELMFILE_VERSION}/helmfile_${HELMFILE_VERSION}_linux_@GOARCH.tar.gz
+
 # https://github.com/helm/helm/releases
 FROM builder AS helm
 ARG HELM_VERSION=3.11.2
@@ -174,6 +180,7 @@ COPY --from=compose     /usr/local/bin/docker-compose /usr/local/bin
 COPY --from=crane       /usr/local/bin/crane          /usr/local/bin
 COPY --from=flux        /usr/local/bin/flux           /usr/local/bin
 COPY --from=helm        /usr/local/bin/helm           /usr/local/bin
+COPY --from=helmfile    /usr/local/bin/helmfile       /usr/local/bin
 COPY --from=httping     /usr/local/bin/httping        /usr/local/bin
 COPY --from=jid         /usr/local/bin/jid            /usr/local/bin
 COPY --from=k9s         /usr/local/bin/k9s            /usr/local/bin
@@ -199,6 +206,7 @@ RUN set -e ; for BIN in \
     crane \
     flux \
     helm \
+    helmfile \
     kapp \
     kubectl \
     kube-linter \
@@ -267,6 +275,7 @@ RUN ( \
     docker-compose version ;\
     echo "crane $(crane version)" ;\
     echo "Helm $(helm version --short)" ;\
+    echo "Helmfile $(helmfile version -o=short | head -n1)" ;\
     httping --version ;\
     jid --version ;\
     echo "k9s $(k9s version | grep Version)" ;\
