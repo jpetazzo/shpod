@@ -299,3 +299,4 @@ RUN ( \
 COPY init.sh /
 CMD ["/init.sh"]
 EXPOSE 22/tcp
+ENV GENERATE_PASSWORD_LENGTH=20
