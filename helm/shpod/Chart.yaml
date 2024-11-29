@@ -1,0 +1,15 @@
+apiVersion: v2
+name: shpod
+version: 0.1.0
+description: Shell in a Pod
+keywords:
+  - ssh
+  - sshd
+  - shell
+type: application
+home: https://github.com/jpetazzo/shpod
+sources:
+  - https://github.com/jpetazzo/shpod
+maintainers:
+  - name: Jérôme Petazzoni
+    email: jerome.petazzoni@gmail.com

@@ -1,4 +1,9 @@
+[build]
+  publish = "build/"
+  command = "./build.sh"
+
 [[redirects]]
   from = "/"
   to = "/shpod.sh"
   status = 200
+

@@ -1,0 +1,20 @@
+{{- if .Values.ssh.enabled }}
+The SSH server is enabled. You can connect to it with an SSH client.
+Use the following command to see how the SSH server is exposed:
+
+kubectl get service {{ include "shpod.fullname" . }} --namespace {{ .Release.Namespace }}
+
+You can access it with kubectl port-forward, like this:
+
+kubectl port-forward service {{ include "shpod.fullname" . }} --namespace {{ .Release.Namespace }} 2222:22
+
+...And then connect using "ssh -l k8s -p 2222 localhost".
+{{- else }}
+The SSH server isn't enabled. You can attach to the shpod shell like this:
+
+kubectl attach -ti deployment/{{ include "shpod.fullname" . }} --namespace {{ .Release.Namespace }}
+{{- end }}
+
+You can also execute a new shpod shell like this:
+
+kubectl exec -ti deployment/{{ include "shpod.fullname" . }} --namespace {{ .Release.Namespace }} -- login -f k8s
