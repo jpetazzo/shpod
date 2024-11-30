@@ -125,6 +125,10 @@ ssh:
   ## If SSH is disabled, you cannot connect to shpod with SSH,
   ## but you can use "kubectl exec" or "kubectl attach".
   enabled: true
-  ## If password is not set, a random password will be generated
-  ## and displayed in the container log.
+  ## If authorized_keys is set, it will be added to the k8s account
+  ## ~/.ssh/authorized_keys file. (It should be a string; for multiple
+  ## keys, use a multi-line string.)
+  authorized_keys: ""
+  ## If password is set, it will be used to set the password for the k8s user.
   password: ""
+  ## If neither authorized_keys nor password is set, a random password will be generated.

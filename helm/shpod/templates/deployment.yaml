@@ -55,6 +55,15 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: status.hostIP
+            {{- if .Values.ssh.password }}
+            - name: PASSWORD
+              value: "{{ .Values.ssh.password }}"
+            {{- end }}
+            {{- if .Values.ssh.authorized_keys }}
+            - name: AUTHORIZED_KEYS
+              value: |
+                {{ .Values.ssh.authorized_keys | nindent 16 }}
+            {{- end }}
           ports:
             - name: ssh
               containerPort: 22

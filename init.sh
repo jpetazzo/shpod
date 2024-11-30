@@ -17,7 +17,7 @@ else
     sudo -u k8s mkdir -p ~k8s/.ssh
     sudo -u k8s touch ~k8s/.ssh/authorized_keys
     while read KEY; do
-      if ! grep -q "$KEY" ~k8s/.ssh/authorized_keys; then
+      if [ "$KEY" ] && ! grep -q "$KEY" ~k8s/.ssh/authorized_keys; then
         echo "$KEY" >> ~k8s/.ssh/authorized_keys
       fi
     done <<< "$AUTHORIZED_KEYS"
