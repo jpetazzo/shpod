@@ -18,6 +18,13 @@ ARG BENTO_VERSION=1.3.0
 RUN helper-curl tar bento \
     https://github.com/warpstreamlabs/bento/releases/download/v${BENTO_VERSION}/bento_${BENTO_VERSION}_linux_@GOARCH.tar.gz
 
+# https://github.com/coder/code-server/releases
+FROM builder AS code-server
+ARG CODE_SERVER_VERSION=4.96.2
+RUN mkdir -p /code-server
+RUN helper-curl tar "--directory=/code-server --strip-components=1" \
+    https://github.com/coder/code-server/releases/download/v${CODE_SERVER_VERSION}/code-server-${CODE_SERVER_VERSION}-linux-@CODERARCH.tar.gz
+
 # https://github.com/docker/compose/releases
 FROM builder AS compose
 ARG COMPOSE_VERSION=2.17.2
@@ -84,7 +91,7 @@ RUN helper-curl tar kubecolor \
 FROM builder AS kubectl
 ARG KUBECTL_VERSION=1.30.2
 RUN helper-curl bin kubectl \
-    https://storage.googleapis.com/kubernetes-release/release/v${KUBECTL_VERSION}/bin/linux/@GOARCH/kubectl 
+    https://storage.googleapis.com/kubernetes-release/release/v${KUBECTL_VERSION}/bin/linux/@GOARCH/kubectl
 
 # https://github.com/stackrox/kube-linter/releases
 FROM builder AS kube-linter
@@ -230,7 +237,7 @@ RUN cd /tmp \
  && rm -rf kubectx
 RUN cd /tmp \
  && git clone https://github.com/jonmosco/kube-ps1 \
- && cp kube-ps1/kube-ps1.sh /etc/profile.d/ \
+ && cp kube-ps1/kube-ps1.sh /etc/bash/ \
  && rm -rf kube-ps1
 
 # Create user and finalize setup.
@@ -251,7 +258,7 @@ RUN \
  && cd \
  && rm -rf /tmp/krew \
  ; fi
-COPY --chown=1000:1000 bash_profile /home/k8s/.bash_profile
+COPY --chown=1000:1000 bashrc /home/k8s/.bashrc
 COPY --chown=1000:1000 vimrc /home/k8s/.vimrc
 COPY --chown=1000:1000 tmux.conf /home/k8s/.tmux.conf
 COPY motd /etc/motd
@@ -300,3 +307,27 @@ COPY init.sh /
 CMD ["/init.sh"]
 EXPOSE 22/tcp
 ENV GENERATE_PASSWORD_LENGTH=20
+
+FROM node:20-slim AS nodejslibs
+WORKDIR /output
+RUN for LINKER in /lib64/ld-linux-x86-64.so.2 /lib/ld-linux-aarch64.so.1 /lib/ld-linux-armhf.so.3; do \
+      if [ -f "$LINKER" ]; then \
+        install -D "$LINKER" "./$LINKER" ;\
+      fi ;\
+    done
+RUN mkdir -p lib
+RUN for LIBDIR in x86_64-linux-gnu aarch64-linux-gnu arm-linux-gnueabihf; do \
+      if [ -d "/lib/$LIBDIR" ]; then \
+        cp -a "/lib/$LIBDIR" lib ;\
+      fi ;\
+    done
+
+# Define an extra build target with "code-server" (VScode in the browser) installed
+FROM shpod AS vspod
+COPY --from=nodejslibs /output /
+COPY --from=code-server /code-server /opt/code-server
+RUN ln -s /opt/code-server/bin/code-server /usr/local/bin
+RUN sudo -u k8s -H code-server --install-extension ms-kubernetes-tools.vscode-kubernetes-tools
+
+# Define the default build target
+FROM shpod

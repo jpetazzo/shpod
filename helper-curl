@@ -11,22 +11,26 @@ amd64)
   GOARCH=amd64
   UARCH=x86_64
   WTFARCH=x86_64
+  CODERARCH=amd64
   ;;
 arm64)
   GOARCH=arm64
   UARCH=aarch64
   WTFARCH=arm64
+  CODERARCH=arm64
   ;;
 arm)
   GOARCH=arm
   UARCH=armv7
   WTFARCH=arm
+  CODERARCH=armv7l
   ;;
 *)
   echo "Unsupported architecture: $TARGETARCH."
   GOARCH=$TARGETARCH
   UARCH=$TARGETARCH
   WTFARCH=$TARGETARCH
+  CODERARCH=$TARGETARCH
   ;;
 esac
 
@@ -35,6 +39,7 @@ mangle() {
   -e s/@GOARCH/$GOARCH/g \
   -e s/@UARCH/$UARCH/g \
   -e s/@WTFARCH/$WTFARCH/g \
+  -e s/@CODERARCH/$CODERARCH/g \
   #
 }
 
