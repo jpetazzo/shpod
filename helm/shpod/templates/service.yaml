@@ -11,5 +11,11 @@ spec:
       targetPort: ssh
       protocol: TCP
       name: ssh
+  {{ if .Values.codeServer.enabled }}
+    - port: {{ .Values.codeServer.servicePort }}
+      targetPort: {{ .Values.codeServer.containerPort }}
+      portocol: TCP
+      name: code-server
+  {{ end }}
   selector:
     {{- include "shpod.selectorLabels" . | nindent 4 }}

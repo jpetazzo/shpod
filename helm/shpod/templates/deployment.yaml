@@ -80,6 +80,42 @@ spec:
             {{- with .Values.volumeMounts }}
               {{- toYaml . | nindent 12 }}
             {{- end }}
+        {{ if .Values.codeServer.enabled }}
+        - name: code-server
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:vspod"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - sudo
+            - -u
+            - k8s
+            - -H
+            - -E
+            - code-server
+            - "--bind-addr=0:{{ .Values.codeServer.containerPort }}"
+          env:
+            - name: HOSTIP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            {{- if ( .Values.codeServer.password | default .Values.ssh.password ) }}
+            - name: PASSWORD
+              value: "{{ .Values.codeServer.password | default .Values.ssh.password }}"
+            {{- end }}
+          ports:
+            - name: code-server
+              containerPort: {{ .Values.codeServer.containerPort }}
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.codeServer.resources | nindent 12 }}
+          volumeMounts:
+            - name: home
+              mountPath: /home/k8s
+            {{- with .Values.volumeMounts }}
+              {{- toYaml . | nindent 12 }}
+            {{- end }}
+      {{ end }}
       volumes:
         - name: home
           {{- if .Values.persistentVolume.enabled }}

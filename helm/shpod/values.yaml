@@ -132,3 +132,14 @@ ssh:
   ## If password is set, it will be used to set the password for the k8s user.
   password: ""
   ## If neither authorized_keys nor password is set, a random password will be generated.
+
+codeServer:
+  ## If code-server is enabled, an extra container will be added in the Pod.
+  ## That container will run code-server (basically VScode in a browser).
+  ## An extra port will be added to the shpod Service.
+  enabled: false
+  servicePort: 80
+  containerPort: 8080
+  ## If the password is blank, it will default to ssh.password.
+  password: ""
+  resources: {}
