@@ -179,7 +179,7 @@ RUN helper-curl bin kapp \
 
 FROM alpine AS shpod
 ENV COMPLETIONS=/usr/share/bash-completion/completions
-RUN apk add --no-cache apache2-utils bash bash-completion curl docker-cli file fzf gettext git iputils jq libintl ncurses openssh openssl screen sudo tmux tree unzip vim yq
+RUN apk add --no-cache apache2-utils bash bash-completion curl docker-cli docker-cli-compose docker-cli-buildx file fzf gettext git iputils jq libintl ncurses openssh openssl screen sudo tmux tree unzip vim yq
 
 COPY --from=argocd      /usr/local/bin/argocd         /usr/local/bin
 COPY --from=bento       /usr/local/bin/bento          /usr/local/bin
@@ -328,6 +328,7 @@ COPY --from=nodejslibs /output /
 COPY --from=code-server /code-server /opt/code-server
 RUN ln -s /opt/code-server/bin/code-server /usr/local/bin
 RUN sudo -u k8s -H code-server --install-extension ms-kubernetes-tools.vscode-kubernetes-tools
+CMD sudo -u k8s -H -E code-server --bind-addr 0:1789
 
 # Define the default build target
 FROM shpod
