@@ -139,7 +139,7 @@ codeServer:
   ## An extra port will be added to the shpod Service.
   enabled: false
   servicePort: 80
-  containerPort: 8080
+  containerPort: 1789
   ## If the password is blank, it will default to ssh.password.
   password: ""
   resources: {}

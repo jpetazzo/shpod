@@ -302,3 +302,27 @@ The Helm chart lets you pick easily which configuration works best for
 you: with or without the SSH server, with or without a password or SSH
 public keys, with or without a Persistent Volume, with or without
 resource requests and limits...
+
+## Experimental stuff
+
+You can enable code-server (basically "VScode used from a browser")
+and expose it over a `NodePort` like so:
+
+```bash
+helm upgrade --install --repo https://shpod.in/ shpod shpod \
+  --set codeServer.enabled=true \
+  --set persistentVolume.enabled=true \
+  --set rbac.cluster.clusterRoles="{cluster-admin}" \
+  --set resources.requests.cpu=0.1 \
+  --set resources.requests.memory=500M \
+  --set resources.limits.cpu=1 \
+  --set resources.limits.memory=500M \
+  --set service.type=NodePort \
+  --set ssh.password=codeserver.support.is.beta.and.will.break
+kubectl wait deployment shpod --for=condition=Available
+```
+
+This is super experimental; I'd like to refactor the image and the
+Helm chart before going further. So if you use this, you should expect
+it to break in the near future.
+

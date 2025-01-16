@@ -327,6 +327,7 @@ FROM shpod AS vspod
 COPY --from=nodejslibs /output /
 COPY --from=code-server /code-server /opt/code-server
 RUN ln -s /opt/code-server/bin/code-server /usr/local/bin
+RUN sudo -u k8s -H code-server --install-extension ms-azuretools.vscode-docker
 RUN sudo -u k8s -H code-server --install-extension ms-kubernetes-tools.vscode-kubernetes-tools
 CMD sudo -u k8s -H -E code-server --bind-addr 0:1789
 

@@ -86,14 +86,6 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:vspod"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command:
-            - sudo
-            - -u
-            - k8s
-            - -H
-            - -E
-            - code-server
-            - "--bind-addr=0:{{ .Values.codeServer.containerPort }}"
           env:
             - name: HOSTIP
               valueFrom:
