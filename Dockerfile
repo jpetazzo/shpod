@@ -42,6 +42,12 @@ ARG FLUX_VERSION=2.3.0
 RUN helper-curl tar flux \
     https://github.com/fluxcd/flux2/releases/download/v$FLUX_VERSION/flux_${FLUX_VERSION}_linux_@GOARCH.tar.gz
 
+# https://github.com/tomnomnom/gron
+FROM builder AS gron
+ARG GRON_VERSION=v0.7.1
+RUN go install "-ldflags=-X main.gronVersion=$GRON_VERSION" github.com/tomnomnom/gron@$GRON_VERSION
+RUN cp $(find bin -name gron) /usr/local/bin
+
 # https://github.com/helmfile/helmfile/releases
 FROM builder AS helmfile
 ARG HELMFILE_VERSION=0.169.1
@@ -186,6 +192,7 @@ COPY --from=bento       /usr/local/bin/bento          /usr/local/bin
 COPY --from=compose     /usr/local/bin/docker-compose /usr/local/bin
 COPY --from=crane       /usr/local/bin/crane          /usr/local/bin
 COPY --from=flux        /usr/local/bin/flux           /usr/local/bin
+COPY --from=gron        /usr/local/bin/gron           /usr/local/bin
 COPY --from=helm        /usr/local/bin/helm           /usr/local/bin
 COPY --from=helmfile    /usr/local/bin/helmfile       /usr/local/bin
 COPY --from=httping     /usr/local/bin/httping        /usr/local/bin
@@ -274,6 +281,7 @@ RUN ( \
     docker version --format="Docker {{.Client.Version}}" ;\
     envsubst --version | head -n1 ;\
     flux --version ;\
+    gron --version ;\
     git --version ;\
     jq --version ;\
     ssh -V ;\

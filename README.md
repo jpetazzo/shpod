@@ -48,6 +48,7 @@ It's based on Alpine, and includes:
 - envsubst
 - fzf
 - git
+- gron
 - Helm
 - jid
 - jq
