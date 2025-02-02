@@ -1,4 +1,27 @@
-# If we don't have a kubeconfig file, let's create one.
+# In theory, ~/.bash_profile only gets loaded for interactive login shells,
+# meaning that it should run only once per session. It makes it the ideal
+# place to start e.g. ssh-agent and do other one-time, expensive operations.
+# On the other hand, aliases have to be defined in each shell, so they
+# would typically be defined in ~/.bashrc. ~/.bashrc is also ideal for
+# environment variables like PS1, or variables that we might want to redefine
+# easily, since ~/.bashrc gets reloaded in each shell. Since ~/.bashrc isn't
+# loaded in login shells, though, it makes sense to load it automatically
+# at the end of ~/.bash_profile.
+#
+# With all that said, though, this will run in containers, and we can't be
+# sure that there will be a proper login shell (for instance, if you run
+# "kubectl exec -ti <pod> -- bash" or "docker exec -ti <container> bash"
+# that will be a non-login interactive shell). Furthermore, when a shell is
+# executed from code-server, it uses a kind of special script to reproduce
+# the same default behavior (difference between login and non-login shells)
+# but I don't know how much we can rely on that.
+#
+# It looks like the best course of action would be to run everything in
+# ~/.bashrc, and invoke ~/.bashrc from ~/.bash_profile (or even make them
+# identical with a symlink). We can revise that strategy later if needed.
+
+###############################################################################
+# First, if we don't have a kubeconfig file, let's create one.
 # (This is necessary for kube_ps1 to operate correctly.)
 if ! [ -f ~/.kube/config ]; then
   # If there is a ConfigMap named 'kubeconfig',
@@ -39,6 +62,50 @@ fi
 # ...But for some reason, that doesn't work with impersonation.
 # (i.e. using "kubectl get pods --as=someone.else")
 
+###############################################################################
+# Now, let's try some xterm magic to figure out if we have a light or dark
+# background, and automatically set the kubecolor theme accordingly.
+if [ ! "$KUBECOLOR_PRESET" ] && [ ! -f ~/.kube/color.yaml ]; then
+  KUBECOLOR_PRESET=$(
+    success=false
+    exec < /dev/tty
+    oldstty=$(stty -g)
+    stty raw -echo min 0
+    col=11      # background
+    #          OSC   Ps  ;Pt ST
+    echo -en "\033]${col};?\033\\" >/dev/tty  # echo opts differ w/ OSes
+    result=
+    if IFS=';' read -r -d '\' color ; then
+        result=$(echo $color | sed 's/^.*\;//;s/[^rgb:0-9a-f/]//g')
+        success=true
+    fi
+    stty $oldstty
+    if $success; then
+      lumaformula=$(echo $result | sed 's/rgb:\(.*\)\/\(.*\)\/\(.*\)/(2*0x\1+1*0x\2+3*0x\3)\/6\/653/')
+      luma=$((lumaformula))
+      if [ "$luma" -lt 25 ]; then
+        echo dark
+      elif [ "$luma" -gt 75 ]; then
+        echo light
+      else
+        echo unsure
+      fi
+    fi
+  )
+  case "$KUBECOLOR_PRESET" in
+  dark|light)
+    echo "🎨 Automatically setting KUBECOLOR_PRESET=$KUBECOLOR_PRESET."
+    export KUBECOLOR_PRESET
+    ;;
+  *)
+    echo "🎨 Failed to detect terminal background color. KUBECOLOR_PRESET not set."
+    unset KUBECOLOR_PRESET
+    ;;
+  esac
+fi
+
+###############################################################################
+# Finally, set up prompt, PATH, completion, history... The classics :)
 if [ -f /etc/HOSTIP ]; then
   HOSTIP=$(cat /etc/HOSTIP)
 else
@@ -52,7 +119,6 @@ KUBE_PS1_NS_COLOR="green"
 PS1="\e[1m\e[31m[\$HOSTIP] \e[0m(\$(kube_ps1)) \e[34m\u@\h\e[35m \w\e[0m\n$ "
 
 export EDITOR=vim
-export KUBECOLOR_LIGHT_BACKGROUND=true
 export PATH="$HOME/.krew/bin:$PATH"
 
 alias k=kubecolor

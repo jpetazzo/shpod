@@ -266,6 +266,7 @@ RUN \
  && rm -rf /tmp/krew \
  ; fi
 COPY --chown=1000:1000 bashrc /home/k8s/.bashrc
+COPY --chown=1000:1000 bash_profile /home/k8s/.bash_profile
 COPY --chown=1000:1000 vimrc /home/k8s/.vimrc
 COPY --chown=1000:1000 tmux.conf /home/k8s/.tmux.conf
 COPY motd /etc/motd
@@ -338,6 +339,7 @@ RUN ln -s /opt/code-server/bin/code-server /usr/local/bin
 RUN sudo -u k8s -H code-server --install-extension ms-azuretools.vscode-docker
 RUN sudo -u k8s -H code-server --install-extension ms-kubernetes-tools.vscode-kubernetes-tools
 CMD sudo -u k8s -H -E code-server --bind-addr 0:1789
+EXPOSE 1789
 
 # Define the default build target
 FROM shpod

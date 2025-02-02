@@ -3,5 +3,4 @@
 🔎 Check "/versions.txt" to see the list of included tools.
 🔗 See https://github.com/jpetazzo/shpod for more information.
 📦️ You can install extra packages with 'sudo apk add PKGNAME'.
-🎨 Dark terminal background? Unset KUBECOLOR_LIGHT_BACKGROUND.
 
