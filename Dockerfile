@@ -68,6 +68,7 @@ RUN apk add build-base cmake gettext git musl-libintl ncurses-dev openssl-dev
 RUN git clone https://github.com/folkertvanheusden/httping
 WORKDIR httping
 RUN sed -i s/60/0/ utils.c
+RUN echo "target_link_options(httping PUBLIC -static)" >> CMakeLists.txt
 RUN cmake .
 RUN make install BINDIR=/usr/local/bin
 
