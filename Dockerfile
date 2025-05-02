@@ -1,5 +1,5 @@
 FROM --platform=$BUILDPLATFORM golang:alpine AS builder
-RUN apk add curl git
+RUN apk add curl git make
 ARG BUILDARCH TARGETARCH
 ENV BUILDARCH=$BUILDARCH \
     CGO_ENABLED=0 \
@@ -83,6 +83,12 @@ FROM builder AS k9s
 RUN helper-curl tar k9s \
     https://github.com/derailed/k9s/releases/latest/download/k9s_Linux_@GOARCH.tar.gz
 
+# https://github.com/kubernetes-sigs/kind/releases
+FROM builder AS kind
+ARG KIND_VERSION=v0.27.0
+RUN helper-curl bin kind \
+    https://github.com/kubernetes-sigs/kind/releases/download/${KIND_VERSION}/kind-linux-@GOARCH
+
 # https://github.com/kubernetes/kompose/releases
 FROM builder AS kompose
 RUN helper-curl bin kompose \
@@ -123,6 +129,15 @@ FROM builder AS kustomize
 ARG KUSTOMIZE_VERSION=5.4.2
 RUN helper-curl tar kustomize \
     https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v$KUSTOMIZE_VERSION/kustomize_v${KUSTOMIZE_VERSION}_linux_@GOARCH.tar.gz
+
+# https://github.com/kubernetes/minikube/releases
+FROM builder AS minikube
+ARG MINIKUBE_VERSION=v1.35.0
+RUN git clone https://github.com/kubernetes/minikube --depth=1
+WORKDIR minikube
+RUN git fetch origin $MINIKUBE_VERSION --depth=1
+RUN make
+RUN cp out/minikube /usr/local/bin/minikube
 
 # https://ngrok.com/download
 FROM builder AS ngrok
@@ -186,7 +201,7 @@ RUN helper-curl bin kapp \
 
 FROM alpine AS shpod
 ENV COMPLETIONS=/usr/share/bash-completion/completions
-RUN apk add --no-cache apache2-utils bash bash-completion curl docker-cli docker-cli-compose docker-cli-buildx file fzf gettext git iputils jq libintl ncurses openssh openssl screen sudo tmux tree unzip vim yq
+RUN apk add --no-cache apache2-utils bash bash-completion curl docker-cli docker-cli-compose docker-cli-buildx docker-engine file fzf gettext git iputils jq libintl ncurses openssh openssl screen socat sudo tmux tree unzip vim yq
 
 COPY --from=argocd      /usr/local/bin/argocd         /usr/local/bin
 COPY --from=bento       /usr/local/bin/bento          /usr/local/bin
@@ -199,6 +214,7 @@ COPY --from=helmfile    /usr/local/bin/helmfile       /usr/local/bin
 COPY --from=httping     /usr/local/bin/httping        /usr/local/bin
 COPY --from=jid         /usr/local/bin/jid            /usr/local/bin
 COPY --from=k9s         /usr/local/bin/k9s            /usr/local/bin
+COPY --from=kind        /usr/local/bin/kind           /usr/local/bin
 COPY --from=kapp        /usr/local/bin/kapp           /usr/local/bin
 COPY --from=kubectl     /usr/local/bin/kubectl        /usr/local/bin
 COPY --from=kubecolor   /usr/local/bin/kubecolor      /usr/local/bin
@@ -206,6 +222,7 @@ COPY --from=kube-linter /usr/local/bin/kube-linter    /usr/local/bin
 COPY --from=kubent      /usr/local/bin/kubent         /usr/local/bin
 COPY --from=kubeseal    /usr/local/bin/kubeseal       /usr/local/bin
 COPY --from=kustomize   /usr/local/bin/kustomize      /usr/local/bin
+COPY --from=minikube    /usr/local/bin/minikube       /usr/local/bin
 COPY --from=ngrok       /usr/local/bin/ngrok          /usr/local/bin
 COPY --from=popeye      /usr/local/bin/popeye         /usr/local/bin
 COPY --from=regctl      /usr/local/bin/regctl         /usr/local/bin
@@ -223,9 +240,11 @@ RUN set -e ; for BIN in \
     helm \
     helmfile \
     kapp \
+    kind \
     kubectl \
     kube-linter \
     kustomize \
+    minikube \
     regctl \
     skaffold \
     tilt \
@@ -252,6 +271,7 @@ RUN cd /tmp \
 
 RUN echo k8s:x:1000: >> /etc/group \
  && echo k8s:x:1000:1000::/home/k8s:/bin/bash >> /etc/passwd \
+ && sed -i 's/^docker:.*:$/\0k8s/' /etc/group \
  && echo "k8s ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/k8s \
  && mkdir /home/k8s \
  && chown -R k8s:k8s /home/k8s/ \
@@ -272,6 +292,8 @@ COPY --chown=1000:1000 vimrc /home/k8s/.vimrc
 COPY --chown=1000:1000 tmux.conf /home/k8s/.tmux.conf
 COPY motd /etc/motd
 COPY setup-tailhist.sh /usr/local/bin
+COPY docker-socket.sh /usr/local/bin
+COPY dind.sh /usr/local/bin
 
 # Generate a list of all installed versions.
 RUN ( \
@@ -296,6 +318,7 @@ RUN ( \
     httping --version ;\
     jid --version ;\
     echo "k9s $(k9s version | grep Version)" ;\
+    kind version ;\
     kapp --version | head -n1 ;\
     echo "kubecolor $(kubecolor --kubecolor-version)" ;\
     echo "kubectl $(kubectl version --client | head -n1)" ;\
@@ -303,6 +326,7 @@ RUN ( \
     echo "kubent $(kubent --version 2>&1)" ;\
     kubeseal --version ;\
     echo "kustomize $(kustomize version | head -n1)" ;\
+    minikube version | head -n1 ;\
     ngrok version ;\
     echo "popeye $(popeye version | grep Version)" ;\
     echo "regctl $(regctl version --format={{.VCSTag}})" ;\
