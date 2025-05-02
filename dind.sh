@@ -1,6 +1,6 @@
 #!/bin/sh
 if [ $# = 0 ]; then
-  if ! mountpoint -q /var/lib/docker; then
+  if ! sudo mountpoint -q /var/lib/docker; then
     echo "/var/lib/docker doesn't seem to be a mountpoint."
     echo "Docker-in-Docker probably won't work. Aborting."
     exit 1
