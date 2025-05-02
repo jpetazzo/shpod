@@ -201,7 +201,7 @@ RUN helper-curl bin kapp \
 
 FROM alpine AS shpod
 ENV COMPLETIONS=/usr/share/bash-completion/completions
-RUN apk add --no-cache apache2-utils bash bash-completion curl docker-cli docker-cli-compose docker-cli-buildx docker-engine file fzf gettext git iputils jq libintl ncurses openssh openssl screen socat sudo tmux tree unzip vim yq
+RUN apk add --no-cache apache2-utils bash bash-completion curl docker-cli docker-cli-compose docker-cli-buildx docker-engine file fzf gettext git iptables-legacy iputils jq libintl ncurses openssh openssl screen socat sudo tmux tree unzip vim yq
 
 COPY --from=argocd      /usr/local/bin/argocd         /usr/local/bin
 COPY --from=bento       /usr/local/bin/bento          /usr/local/bin

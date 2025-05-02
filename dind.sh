@@ -5,6 +5,11 @@ if [ $# = 0 ]; then
     echo "Docker-in-Docker probably won't work. Aborting."
     exit 1
   fi
+  if lsmod | grep -q ^iptable; then
+    echo "Detected modules for legacy iptables."
+    echo "Updating iptables to point to legacy binary."
+    sudo ln -sf xtables-legacy-multi $(which iptables)
+  fi
   echo "Starting Docker Engine in the background (logging to $HOME/docker.log)."
   nohup sudo sh -c "$0 dockerd &" >$HOME/docker.log
   exit 0
