@@ -1,2 +1,2 @@
 #!/bin/sh
-echo "# $0 is not supported on this platform ($(uname -m))."
+echo "# ⚠️ $0 is not supported on this platform ($(uname -m))."

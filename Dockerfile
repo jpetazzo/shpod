@@ -20,14 +20,14 @@ RUN helper-curl tar bento \
 
 # https://github.com/coder/code-server/releases
 FROM builder AS code-server
-ARG CODE_SERVER_VERSION=4.96.2
+ARG CODE_SERVER_VERSION=4.99.4
 RUN mkdir -p /code-server
 RUN helper-curl tar "--directory=/code-server --strip-components=1" \
     https://github.com/coder/code-server/releases/download/v${CODE_SERVER_VERSION}/code-server-${CODE_SERVER_VERSION}-linux-@CODERARCH.tar.gz
 
 # https://github.com/docker/compose/releases
 FROM builder AS compose
-ARG COMPOSE_VERSION=2.17.2
+ARG COMPOSE_VERSION=2.35.1
 RUN helper-curl bin docker-compose \
     https://github.com/docker/compose/releases/download/v${COMPOSE_VERSION}/docker-compose-linux-@UARCH
 
@@ -38,7 +38,7 @@ RUN cp $(find bin -name crane) /usr/local/bin
 
 # https://github.com/fluxcd/flux2/releases
 FROM builder AS flux
-ARG FLUX_VERSION=2.3.0
+ARG FLUX_VERSION=2.5.1
 RUN helper-curl tar flux \
     https://github.com/fluxcd/flux2/releases/download/v$FLUX_VERSION/flux_${FLUX_VERSION}_linux_@GOARCH.tar.gz
 
@@ -50,13 +50,13 @@ RUN cp $(find bin -name gron) /usr/local/bin
 
 # https://github.com/helmfile/helmfile/releases
 FROM builder AS helmfile
-ARG HELMFILE_VERSION=0.169.1
+ARG HELMFILE_VERSION=1.0.0
 RUN helper-curl tar helmfile \
     https://github.com/helmfile/helmfile/releases/download/v${HELMFILE_VERSION}/helmfile_${HELMFILE_VERSION}_linux_@GOARCH.tar.gz
 
 # https://github.com/helm/helm/releases
 FROM builder AS helm
-ARG HELM_VERSION=3.11.2
+ARG HELM_VERSION=3.17.3
 RUN helper-curl tar "--strip-components=1 linux-@GOARCH/helm" \
     https://get.helm.sh/helm-v${HELM_VERSION}-linux-@GOARCH.tar.gz
 
@@ -96,19 +96,19 @@ RUN helper-curl bin kompose \
 
 # https://github.com/kubecolor/kubecolor/releases
 FROM builder AS kubecolor
-ARG KUBECOLOR_VERSION=0.3.2
+ARG KUBECOLOR_VERSION=0.5.1
 RUN helper-curl tar kubecolor \
     https://github.com/kubecolor/kubecolor/releases/download/v${KUBECOLOR_VERSION}/kubecolor_${KUBECOLOR_VERSION}_linux_@GOARCH.tar.gz
 
 # https://github.com/kubernetes/kubernetes/releases
 FROM builder AS kubectl
-ARG KUBECTL_VERSION=1.30.2
-RUN helper-curl bin kubectl \
-    https://storage.googleapis.com/kubernetes-release/release/v${KUBECTL_VERSION}/bin/linux/@GOARCH/kubectl
+ARG KUBECTL_VERSION=1.33.0
+RUN helper-curl tar "--strip-components=3 kubernetes/client/bin/kubectl" \
+    https://dl.k8s.io/v${KUBECTL_VERSION}/kubernetes-client-linux-@GOARCH.tar.gz
 
 # https://github.com/stackrox/kube-linter/releases
 FROM builder AS kube-linter
-ARG KUBELINTER_VERSION=v0.6.8
+ARG KUBELINTER_VERSION=v0.7.2
 RUN go install golang.stackrox.io/kube-linter/cmd/kube-linter@$KUBELINTER_VERSION
 RUN cp $(find bin -name kube-linter) /usr/local/bin
 
@@ -120,13 +120,13 @@ RUN helper-curl tar kubent \
 
 # https://github.com/bitnami-labs/sealed-secrets/releases
 FROM builder AS kubeseal
-ARG KUBESEAL_VERSION=0.27.0
+ARG KUBESEAL_VERSION=0.29.0
 RUN helper-curl tar kubeseal \
     https://github.com/bitnami-labs/sealed-secrets/releases/download/v$KUBESEAL_VERSION/kubeseal-$KUBESEAL_VERSION-linux-@GOARCH.tar.gz
 
 # https://github.com/kubernetes-sigs/kustomize/releases
 FROM builder AS kustomize
-ARG KUSTOMIZE_VERSION=5.4.2
+ARG KUSTOMIZE_VERSION=5.6.0
 RUN helper-curl tar kustomize \
     https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v$KUSTOMIZE_VERSION/kustomize_v${KUSTOMIZE_VERSION}_linux_@GOARCH.tar.gz
 
@@ -147,22 +147,13 @@ RUN helper-curl tar ngrok \
 # https://github.com/derailed/popeye/releases
 FROM builder AS popeye
 RUN helper-curl tar popeye \
-    https://github.com/derailed/popeye/releases/latest/download/popeye_Linux_@WTFARCH.tar.gz
+    https://github.com/derailed/popeye/releases/latest/download/popeye_linux_@GOARCH.tar.gz
 
 # https://github.com/regclient/regclient/releases
 FROM builder AS regctl
-ARG REGCLIENT_VERSION=0.6.1
+ARG REGCLIENT_VERSION=0.8.3
 RUN helper-curl bin regctl \
     https://github.com/regclient/regclient/releases/download/v$REGCLIENT_VERSION/regctl-linux-@GOARCH
-
-# This tool is still used in the kustomize section, but we will probably
-# deprecate it eventually as we only use a tiny feature that doesn't seem
-# to be available anymore in more recent versions (or requires some work
-# to adapt). Also, it's not available on all platforms and doesn't compile.
-FROM builder AS ship
-ARG SHIP_VERSION=0.51.3
-RUN helper-curl tar ship \
-    https://github.com/replicatedhq/ship/releases/download/v${SHIP_VERSION}/ship_${SHIP_VERSION}_linux_@GOARCH.tar.gz
 
 # https://github.com/GoogleContainerTools/skaffold/releases
 FROM builder AS skaffold
@@ -171,31 +162,31 @@ RUN helper-curl bin skaffold \
 
 # https://github.com/stern/stern/releases
 FROM builder AS stern
-ARG STERN_VERSION=1.30.0
+ARG STERN_VERSION=1.32.0
 RUN helper-curl tar stern \
     https://github.com/stern/stern/releases/download/v${STERN_VERSION}/stern_${STERN_VERSION}_linux_@GOARCH.tar.gz
 
 # https://github.com/tilt-dev/tilt/releases
 FROM builder AS tilt
-ARG TILT_VERSION=0.33.17
+ARG TILT_VERSION=0.34.2
 RUN helper-curl tar tilt \
     https://github.com/tilt-dev/tilt/releases/download/v${TILT_VERSION}/tilt.${TILT_VERSION}.linux-alpine.@WTFARCH.tar.gz
 
 # https://github.com/vmware-tanzu/velero/releases
 FROM builder AS velero
-ARG VELERO_VERSION=1.14.0
+ARG VELERO_VERSION=1.16.0
 RUN helper-curl tar "--strip-components=1 velero-v${VELERO_VERSION}-linux-@GOARCH/velero" \
     https://github.com/vmware-tanzu/velero/releases/download/v${VELERO_VERSION}/velero-v${VELERO_VERSION}-linux-@GOARCH.tar.gz
 
 # https://github.com/carvel-dev/ytt/releases
 FROM builder AS ytt
-ARG YTT_VERSION=0.49.1
+ARG YTT_VERSION=0.52.0
 RUN helper-curl bin ytt \
     https://github.com/carvel-dev/ytt/releases/download/v${YTT_VERSION}/ytt-linux-@GOARCH
 
 # https://github.com/carvel-dev/kapp/releases
 FROM builder AS kapp
-ARG YTT_VERSION=0.62.1
+ARG YTT_VERSION=0.64.1
 RUN helper-curl bin kapp \
     https://github.com/carvel-dev/kapp/releases/download/v${YTT_VERSION}/kapp-linux-@GOARCH
 
@@ -226,7 +217,6 @@ COPY --from=minikube    /usr/local/bin/minikube       /usr/local/bin
 COPY --from=ngrok       /usr/local/bin/ngrok          /usr/local/bin
 COPY --from=popeye      /usr/local/bin/popeye         /usr/local/bin
 COPY --from=regctl      /usr/local/bin/regctl         /usr/local/bin
-COPY --from=ship        /usr/local/bin/ship           /usr/local/bin
 COPY --from=skaffold    /usr/local/bin/skaffold       /usr/local/bin
 COPY --from=stern       /usr/local/bin/stern          /usr/local/bin
 COPY --from=tilt        /usr/local/bin/tilt           /usr/local/bin
@@ -331,7 +321,6 @@ RUN ( \
     ngrok version ;\
     echo "popeye $(popeye version | grep Version)" ;\
     echo "regctl $(regctl version --format={{.VCSTag}})" ;\
-    echo "ship $(ship version | jq .version)" ;\
     echo "skaffold $(skaffold version)" ;\
     echo "stern $(stern --version | grep ^version)" ;\
     echo "tilt $(tilt version)" ;\
