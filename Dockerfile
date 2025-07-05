@@ -7,6 +7,11 @@ ENV BUILDARCH=$BUILDARCH \
     TARGETARCH=$TARGETARCH
 COPY helper-* /bin/
 
+FROM alpine AS addmount
+RUN apk add build-base
+COPY addmount.c .
+RUN make addmount
+
 # https://github.com/argoproj/argo-cd/releases/latest
 FROM builder AS argocd
 RUN helper-curl bin argocd \
@@ -68,7 +73,7 @@ RUN apk add build-base cmake gettext git musl-libintl ncurses-dev openssl-dev
 RUN git clone https://github.com/folkertvanheusden/httping
 WORKDIR httping
 RUN sed -i s/60/0/ utils.c
-RUN echo "target_link_options(httping PUBLIC -static)" >> CMakeLists.txt
+#RUN echo "target_link_options(httping PUBLIC -static)" >> CMakeLists.txt
 RUN cmake .
 RUN make install BINDIR=/usr/local/bin
 
@@ -194,6 +199,7 @@ FROM alpine AS shpod
 ENV COMPLETIONS=/usr/share/bash-completion/completions
 RUN apk add --no-cache apache2-utils bash bash-completion curl docker-cli docker-cli-compose docker-cli-buildx docker-engine file fzf gettext git iptables-legacy iputils jq libintl ncurses openssh openssl screen socat sudo tmux tree unzip vim yq
 
+COPY --from=addmount    /addmount                     /usr/local/bin
 COPY --from=argocd      /usr/local/bin/argocd         /usr/local/bin
 COPY --from=bento       /usr/local/bin/bento          /usr/local/bin
 COPY --from=compose     /usr/local/bin/docker-compose /usr/local/bin
@@ -284,6 +290,7 @@ COPY motd /etc/motd
 COPY setup-tailhist.sh /usr/local/bin
 COPY docker-socket.sh /usr/local/bin
 COPY dind.sh /usr/local/bin
+COPY bore.sh /usr/local/bin
 VOLUME /var/lib/docker
 
 # Generate a list of all installed versions.
