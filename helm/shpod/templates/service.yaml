@@ -14,7 +14,7 @@ spec:
   {{ if .Values.codeServer.enabled }}
     - port: {{ .Values.codeServer.servicePort }}
       targetPort: {{ .Values.codeServer.containerPort }}
-      portocol: TCP
+      protocol: TCP
       name: code-server
   {{ end }}
   selector:
