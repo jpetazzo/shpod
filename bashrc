@@ -65,6 +65,12 @@ fi
 ###############################################################################
 # Now, let's try some xterm magic to figure out if we have a light or dark
 # background, and automatically set the kubecolor theme accordingly.
+# Note that some terminals don't implement the special ANSI sequence that
+# we're using. On these terminals, our color detection mechanisms will incur
+# an extra 3 seconds delay when logging in, and kubecolor will be disabled.
+# Affected terminals include:
+# - MacOS Terminal
+# - Linux virtual consoles
 if [ ! "$KUBECOLOR_PRESET" ] && [ ! -f ~/.kube/color.yaml ]; then
   KUBECOLOR_PRESET=$(
     success=false
@@ -75,7 +81,7 @@ if [ ! "$KUBECOLOR_PRESET" ] && [ ! -f ~/.kube/color.yaml ]; then
     #          OSC   Ps  ;Pt ST
     echo -en "\033]${col};?\033\\" >/dev/tty  # echo opts differ w/ OSes
     result=
-    if IFS=';' read -r -d '\' color ; then
+    if IFS=';' read -t 2 -r -d '\' color ; then
         result=$(echo $color | sed 's/^.*\;//;s/[^rgb:0-9a-f/]//g')
         success=true
     fi
@@ -90,6 +96,8 @@ if [ ! "$KUBECOLOR_PRESET" ] && [ ! -f ~/.kube/color.yaml ]; then
       else
         echo unsure
       fi
+    else
+      echo timeout
     fi
   )
   case "$KUBECOLOR_PRESET" in
@@ -100,6 +108,7 @@ if [ ! "$KUBECOLOR_PRESET" ] && [ ! -f ~/.kube/color.yaml ]; then
   *)
     echo "🎨 Failed to detect terminal background color. KUBECOLOR_PRESET not set."
     unset KUBECOLOR_PRESET
+    export NO_COLOR=kubecolor_disabled
     ;;
   esac
 fi
