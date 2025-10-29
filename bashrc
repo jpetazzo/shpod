@@ -142,3 +142,17 @@ trap 'history -a' DEBUG
 export HISTFILE=~/.history
 
 trap exit TERM
+
+is_kind_up() {
+  kubectl config get-contexts kind-kind >/dev/null 2>&1
+}
+
+if [ "$CODESPACES" = "true" ]; then
+  if ! is_kind_up; then
+    echo "⏳️ KinD cluster isn't ready yet. Please wait."
+    echo "💡 (Or press Ctrl-C if you don't want to wait.)"
+    while ! is_kind_up; do
+      sleep 1
+    done
+  fi
+fi

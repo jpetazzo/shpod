@@ -290,6 +290,7 @@ COPY motd /etc/motd
 COPY setup-tailhist.sh /usr/local/bin
 COPY docker-socket.sh /usr/local/bin
 COPY dind.sh /usr/local/bin
+COPY kind.sh /usr/local/bin
 COPY bore.sh /usr/local/bin
 VOLUME /var/lib/docker
 
