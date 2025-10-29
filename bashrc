@@ -104,6 +104,7 @@ if [ ! "$KUBECOLOR_PRESET" ] && [ ! -f ~/.kube/color.yaml ]; then
   dark|light)
     echo "🎨 Automatically setting KUBECOLOR_PRESET=$KUBECOLOR_PRESET."
     export KUBECOLOR_PRESET
+    unset NO_COLOR
     ;;
   *)
     echo "🎨 Failed to detect terminal background color. KUBECOLOR_PRESET not set."
