@@ -81,6 +81,8 @@ jobs:
           platforms: ${{ inputs.PLATFORMS }}
           push: true
           tags: ${{ env.IMAGES }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       -
         uses: docker/build-push-action@v3
@@ -89,3 +91,5 @@ jobs:
           push: true
           target: vspod
           tags: jpetazzo/shpod:vspod,ghcr.io/jpetazzo/shpod:vspod
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
