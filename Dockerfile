@@ -25,7 +25,7 @@ RUN helper-curl tar bento \
 
 # https://github.com/coder/code-server/releases
 FROM builder AS code-server
-ARG CODE_SERVER_VERSION=4.105.1
+ARG CODE_SERVER_VERSION=4.118.0
 RUN mkdir -p /code-server
 RUN helper-curl tar "--directory=/code-server --strip-components=1" \
     https://github.com/coder/code-server/releases/download/v${CODE_SERVER_VERSION}/code-server-${CODE_SERVER_VERSION}-linux-@CODERARCH.tar.gz
@@ -61,7 +61,7 @@ RUN helper-curl tar helmfile \
 
 # https://github.com/helm/helm/releases
 FROM builder AS helm
-ARG HELM_VERSION=3.19.0
+ARG HELM_VERSION=4.1.4
 RUN helper-curl tar "--strip-components=1 linux-@GOARCH/helm" \
     https://get.helm.sh/helm-v${HELM_VERSION}-linux-@GOARCH.tar.gz
 
