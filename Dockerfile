@@ -164,23 +164,25 @@ FROM builder AS skaffold
 RUN helper-curl bin skaffold \
     https://storage.googleapis.com/skaffold/releases/latest/skaffold-linux-@GOARCH
 
-# As of 0.25.3, sofka builds are dynamically linked against glibc,
+# Prior to 0.28.0, sofka builds were dynamically linked against glibc,
 # so we need to build it ourselves
-FROM builder AS sofka
-COPY uarch.sh /usr/local/bin
-RUN apk add cargo git rustup zig
-RUN rustup-init -y --target $(uarch.sh $TARGETARCH)-unknown-linux-musl
-RUN ~/.cargo/bin/cargo install cargo-zigbuild
-RUN git clone https://github.com/nklmilojevic/sofka
-WORKDIR sofka
-RUN ~/.cargo/bin/cargo zigbuild --target $(uarch.sh $TARGETARCH)-unknown-linux-musl --release
-RUN cp target/$(uarch.sh $TARGETARCH)-unknown-linux-musl/release/sofka /usr/local/bin
-
-# https://github.com/nklmilojevic/sofka/releases
 #FROM builder AS sofka
-#ARG SOFKA_VERSION=0.25.3
-#RUN helper-curl tar sofka \
-#    https://github.com/nklmilojevic/sofka/releases/download/v${SOFKA_VERSION}/sofka-v${SOFKA_VERSION}-@UARCH-unknown-linux-gnu.tar.gz
+#COPY uarch.sh /usr/local/bin
+#RUN apk add cargo git rustup zig
+#RUN rustup-init -y --target $(uarch.sh $TARGETARCH)-unknown-linux-musl
+#RUN ~/.cargo/bin/cargo install cargo-zigbuild
+#RUN git clone https://github.com/nklmilojevic/sofka
+#WORKDIR sofka
+#RUN ~/.cargo/bin/cargo zigbuild --target $(uarch.sh $TARGETARCH)-unknown-linux-musl --release
+#RUN cp target/$(uarch.sh $TARGETARCH)-unknown-linux-musl/release/sofka /usr/local/bin
+
+# ...But when from 0.28.0, sofka got a new build system producing Alpine packages
+# (and static binaries) so we can just fetch that. Yay!
+# https://github.com/nklmilojevic/sofka/releases
+FROM builder AS sofka
+ARG SOFKA_VERSION=0.28.0
+RUN helper-curl tar sofka \
+    https://github.com/nklmilojevic/sofka/releases/download/v${SOFKA_VERSION}/sofka-v${SOFKA_VERSION}-@UARCH-unknown-linux-musl.tar.gz
 
 # https://github.com/stern/stern/releases
 FROM builder AS stern
