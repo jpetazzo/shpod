@@ -76,15 +76,32 @@ jobs:
         uses: docker/setup-buildx-action@v2
 
       -
+        name: Build shpod
+        uses: docker/build-push-action@v3
+        with:
+          platforms: ${{ inputs.PLATFORMS }}
+          push: false
+          tags: ${{ env.IMAGES }}
+          cache-from: type=gha
+
+      -
+        name: Push shpod
         uses: docker/build-push-action@v3
         with:
           platforms: ${{ inputs.PLATFORMS }}
           push: true
           tags: ${{ env.IMAGES }}
-          cache-from: type=gha
+
+      - 
+        name: Cache shpod
+        uses: docker/build-push-action@v3
+        with:
+          platforms: ${{ inputs.PLATFORMS }}
+          push: false
           cache-to: type=gha,mode=max
 
       -
+        name: Build, push, and cache vspod
         uses: docker/build-push-action@v3
         with:
           platforms: ${{ inputs.PLATFORMS }}
