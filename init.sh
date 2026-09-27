@@ -12,6 +12,10 @@ else
   if ! [ -f /etc/ssh/ssh_host_rsa_key ]; then
     ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key -N ""
   fi
+  if [ "$HOSTIP" ]; then
+    echo 'Environment variable $HOSTIP found. Writing it to /etc/HOSTIP.'
+    echo "$HOSTIP" >/etc/HOSTIP
+  fi
   if [ "$AUTHORIZED_KEYS" ]; then
     echo 'Environment variable $AUTHORIZED_KEYS found. Adding keys.'
     sudo -u k8s mkdir -p ~k8s/.ssh
